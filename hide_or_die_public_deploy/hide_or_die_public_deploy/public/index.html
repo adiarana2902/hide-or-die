@@ -13,11 +13,10 @@ canvas{display:block;width:100%;height:100%}
 #status{font-weight:800;letter-spacing:2px;color:#ff6573}#timer{font-size:25px;font-weight:900}
 #role{position:absolute;left:16px;top:16px;background:#080b10c9;border:1px solid #ffffff24;padding:10px 13px;border-radius:12px}
 #hint{position:absolute;bottom:20px;left:50%;transform:translateX(-50%);background:#080b10c9;padding:10px 16px;border-radius:12px;color:#d3dbe3;text-align:center;max-width:90%}
-#map{position:absolute;right:16px;top:16px;width:150px;height:150px;border:1px solid #ffffff55;border-radius:12px;background:#071019dd}
+#map{position:absolute;right:16px;top:16px;width:210px;height:210px;max-width:30vw;max-height:30vw;border:2px solid #91a8b744;border-radius:14px;background:#071019ee;box-shadow:0 8px 30px #0009}
 #flash{position:absolute;inset:0;background:#fff;opacity:0;transition:opacity .12s}
 #scare{position:absolute;inset:0;display:grid;place-items:center;font-size:clamp(55px,13vw,150px);opacity:0;background:#000b;transition:opacity .2s;text-shadow:0 0 25px red}
-#mic{position:absolute;left:16px;bottom:20px;pointer-events:auto;background:#202d37;color:white;border:1px solid #ffffff44;border-radius:10px;padding:10px 13px}
-#mic.live{background:#7b1521}
+#voiceNote{position:absolute;left:16px;bottom:20px;padding:9px 12px;border-radius:10px;background:#080b10d9;border:1px solid #ffffff2b;color:#aebdc7;font-size:11px;letter-spacing:.5px}
 #storyInfo{position:absolute;left:16px;top:76px;max-width:min(300px,58vw);padding:10px 12px;background:#080b10d9;border:1px solid #ffffff2b;border-radius:12px;font-size:12px;line-height:1.45;backdrop-filter:blur(8px)}#storyInfo b{color:#ff7884;display:block;margin-bottom:3px;letter-spacing:1px}
 #touchControls{position:absolute;left:16px;bottom:76px;display:none;gap:6px;pointer-events:auto;touch-action:none}#touchControls .pad{display:grid;grid-template-columns:repeat(3,42px);grid-template-rows:repeat(2,42px);gap:4px}#touchControls button{padding:0;background:#111b24dd;border:1px solid #ffffff55;color:white;font-size:18px}#touchControls button[data-dir=up]{grid-column:2}#touchControls button[data-dir=left]{grid-column:1;grid-row:2}#touchControls button[data-dir=down]{grid-column:2;grid-row:2}#touchControls button[data-dir=right]{grid-column:3;grid-row:2}#interact{position:absolute;right:16px;bottom:78px;pointer-events:auto;display:none;padding:14px 18px;border-radius:50%;box-shadow:0 4px 25px #0009}
 #endPanel{position:fixed;inset:0;z-index:8;display:none;place-items:center;padding:18px;background:#020509d9;backdrop-filter:blur(8px)}#endPanel .card{max-width:520px}#endTitle{color:#ff6472}#endText{color:#c4ced7;line-height:1.6}
@@ -29,7 +28,7 @@ h1{font-size:clamp(32px,8vw,54px);line-height:.95;margin:0 0 8px;letter-spacing:
 #characterEditor{margin:16px 0 12px;padding:14px;border:1px solid #ffffff22;border-radius:16px;background:#080e14}#characterEditor summary{cursor:pointer;font-weight:800;letter-spacing:.5px;color:#f5c6cb}#avatarPreview{display:block;width:100%;height:130px;background:radial-gradient(ellipse,#29353d,#0b1118 70%);border-radius:12px;margin:12px 0}#avatarControls{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}#avatarControls label{display:flex;flex-direction:column;gap:5px;font-size:11px;color:#aab7c2}#avatarControls input[type=color]{width:100%;height:38px;padding:4px;background:#080d13;flex:auto}#avatarControls select{width:100%;min-width:0;background:#080d13;color:white;border:1px solid #ffffff26;border-radius:10px;padding:9px}#players .pill{display:flex;align-items:center;gap:7px}.avatarDot{width:13px;height:17px;display:inline-block;border-radius:5px 5px 3px 3px;border:1px solid #ffffff70;position:relative;flex:none}
 #lobby{display:none}.players{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0}.pill{background:#1c2934;border:1px solid #ffffff1c;padding:7px 10px;border-radius:99px;font-size:13px}
 #toast{position:fixed;top:22%;left:50%;transform:translateX(-50%);max-width:90%;text-align:center;background:#941b2c;padding:12px 18px;border-radius:12px;opacity:0;pointer-events:none;transition:opacity .2s;font-weight:800;z-index:9}
-@media(max-width:700px){#map{width:112px;height:112px}.card{padding:20px}#role{font-size:12px}#touchControls{display:flex}#interact{display:block}#hint{bottom:16px;max-width:54%;font-size:12px}#storyInfo{top:68px;max-width:48vw;font-size:11px}}
+@media(max-width:700px){#map{width:132px;height:132px;max-width:36vw;max-height:36vw}.card{padding:20px}#role{font-size:12px}#touchControls{display:flex}#interact{display:block}#hint{bottom:16px;max-width:54%;font-size:12px}#storyInfo{top:68px;max-width:48vw;font-size:11px}#voiceNote{bottom:15px;font-size:9px;padding:7px 9px}}
 </style>
 </head>
 <body>
@@ -41,7 +40,7 @@ h1{font-size:clamp(32px,8vw,54px);line-height:.95;margin:0 0 8px;letter-spacing:
  <div id="storyInfo" style="display:none"><b>YOUR OBJECTIVE</b><span id="storyGoal">Explore the dark.</span></div>
  <div id="hint">WASD / Arrow keys to move · Find a hiding spot · Stay quiet</div>
  <div id="touchControls"><div class="pad"><button data-dir="up">▲</button><button data-dir="left">◀</button><button data-dir="down">▼</button><button data-dir="right">▶</button></div></div><button id="interact">E · USE</button>
- <button id="mic">🎙 Enable voice</button>
+ <div id="voiceNote">🔇 VOICE CHAT OFF · MICROPHONE NOT USED</div>
  <div id="flash"></div><div id="scare">👁️</div>
 </div>
 <div class="screen" id="home"><div class="card">
@@ -61,7 +60,7 @@ h1{font-size:clamp(32px,8vw,54px);line-height:.95;margin:0 0 8px;letter-spacing:
  </details>
  <div class="row" style="margin-top:10px"><button id="create">Create private room</button><button class="secondary" id="joinToggle">Join room</button><button class="secondary" id="solo">Play solo story</button></div>
  <div id="joinBox" style="display:none;margin-top:12px" class="row"><input id="roomCode" maxlength="6" placeholder="ROOM CODE"><button id="join">Join</button></div>
- <div class="small">2–10 players · Private rooms · Random solo horror stories · Ghost events · Optional voice chat. Mic is never activated without your permission.</div>
+ <div class="small">2–10 players · Private rooms · Random solo horror stories · Ghost events · Voice chat is disabled.</div>
  <div class="room" id="connection">Connecting to game server…</div>
 </div></div>
 <div class="screen" id="lobby"><div class="card">
@@ -77,10 +76,35 @@ h1{font-size:clamp(32px,8vw,54px);line-height:.95;margin:0 0 8px;letter-spacing:
 <script>
 (() => {
 const $=id=>document.getElementById(id);
-const socket=io();let me=null,room=null,host=false,players=[],state='home',role='hider',keys={},pos={x:0,z:0},others={},lastPing=0,voiceStream=null,peerConnections={},audioEls={},mode='multi',soloRun=null,lastScenario=-1;
+const socket=io();let me=null,room=null,host=false,players=[],state='home',role='hider',keys={},pos={x:0,z:0},others={},lastPing=0,mode='multi',soloRun=null,lastScenario=-1;
 const AVATAR_DEFAULT={skin:'#c6865b',hair:'#24201e',outfit:'#334c63',pants:'#22252b',hairStyle:'short',outfitStyle:'hoodie',accessory:'none'};
 let avatar=loadAvatar();
 const canvas=$('world'),ctx=canvas.getContext('2d');let W=0,H=0,raf=0,startedAt=0,ghostAt=0,ghostOn=false;
+const MAP_ROOMS=[
+ {name:'CAFETERIA',x:-16,z:-16,w:11,h:9,tone:'#263a42'},
+ {name:'MEDBAY',x:-16,z:-4,w:9,h:8,tone:'#243b43'},
+ {name:'STORAGE',x:-16,z:7,w:11,h:9,tone:'#3a342b'},
+ {name:'REACTOR',x:5,z:-16,w:11,h:9,tone:'#3b292e'},
+ {name:'LABORATORY',x:7,z:-4,w:9,h:8,tone:'#2c3043'},
+ {name:'SECURITY',x:5,z:7,w:11,h:9,tone:'#26343d'},
+ {name:'CENTRAL HALL',x:-4,z:-4,w:8,h:8,tone:'#303a3d'}
+];
+const MAP_CORRIDORS=[
+ {x:-5.8,z:-10,w:11.6,h:3.6},{x:-1.8,z:-7.5,w:3.6,h:4},
+ {x:-7.5,z:-1.8,w:4,h:3.6},{x:3.5,z:-1.8,w:4,h:3.6},
+ {x:-5.8,z:3.5,w:11.6,h:3.7}
+];
+const WALKABLE=MAP_ROOMS.concat(MAP_CORRIDORS);
+function canWalk(x,z){const m=.22;return WALKABLE.some(r=>x>=r.x+m&&x<=r.x+r.w-m&&z>=r.z+m&&z<=r.z+r.h-m)}
+const MAP_PROPS=[
+ {x:-12,z:-12,w:2.1,h:1.1,c:'#657078'},{x:-8,z:-12,w:1.8,h:1.1,c:'#657078'},
+ {x:-12,z:0,w:1.3,h:2.5,c:'#56717a'},{x:-9,z:0,w:1.3,h:2.5,c:'#56717a'},
+ {x:-12,z:11,w:2,h:2,c:'#80684b'},{x:-8,z:12,w:2,h:1.6,c:'#80684b'},
+ {x:8,z:-12,w:2.3,h:1.4,c:'#78515a'},{x:12,z:-12,w:2.3,h:1.4,c:'#78515a'},
+ {x:10,z:0,w:2,h:1.4,c:'#53618a'},{x:12,z:2,w:1.5,h:1.2,c:'#53618a'},
+ {x:8,z:12,w:2.4,h:1.4,c:'#526875'},{x:12,z:12,w:2.4,h:1.4,c:'#526875'},
+ {x:-1.5,z:-1.5,w:1.1,h:1.1,c:'#64777a'},{x:1.5,z:1.5,w:1.1,h:1.1,c:'#64777a'}
+];
 function resize(){W=canvas.width=innerWidth*devicePixelRatio;H=canvas.height=innerHeight*devicePixelRatio;canvas.style.width=innerWidth+'px';canvas.style.height=innerHeight+'px'}addEventListener('resize',resize);resize();
 function toast(t,duration=1800){$('toast').textContent=t;$('toast').style.opacity=1;setTimeout(()=>$('toast').style.opacity=0,duration)}
 function setScreen(s){$('home').style.display=s==='home'?'grid':'none';$('lobby').style.display=s==='lobby'?'grid':'none';$('game').style.display=s==='game'?'block':'none';$('hud').style.display=s==='game'?'block':'none';$('endPanel').style.display='none';state=s}
@@ -108,13 +132,23 @@ $('solo').onclick=()=>startSoloStory();
 ['skinColor','hairColor','outfitColor','pantsColor','hairStyle','outfitStyle','accessory'].forEach(id=>$(id).addEventListener('input',()=>{avatar[id.replace('Color','')]=['skinColor','hairColor','outfitColor','pantsColor'].includes(id)?$(id).value:$(id).value;saveAvatar()}));
 $('name').addEventListener('change',()=>{me=$('name').value.trim()||'Player'});applyAvatarToControls();drawAvatarPreview();
 socket.on('roomUpdate',d=>{if(state==='home'){enterLobby(d);toast('Private room created/joined!')}else{room=d;players=d.players;host=d.host===socket.id;renderPlayers()}});
-socket.on('matchStart',d=>{mode='multi';soloRun=null;$('storyInfo').style.display='none';$('interact').style.display='none';$('mic').style.display='block';role=d.roles[socket.id]||'hider';pos={x:Math.random()*14-7,z:Math.random()*14-7};others={};startedAt=Date.now();ghostAt=Date.now()+12000;ghostOn=false;$('role').innerHTML='ROLE: <b>'+role.toUpperCase()+'</b>';$('status').textContent=role==='seeker'?'FIND THEM':'HIDE. STAY ALIVE.';$('hint').textContent=role==='seeker'?'Find every hider before time runs out.':'Move, hide, and avoid the seeker. Ghosts may expose you.';setScreen('game');cancelAnimationFrame(raf);loop()});
+socket.on('matchStart',d=>{mode='multi';soloRun=null;$('storyInfo').style.display='none';$('interact').style.display='none';role=d.roles[socket.id]||'hider';pos={x:Math.random()*2.4-1.2,z:Math.random()*2.4-1.2};others={};startedAt=Date.now();ghostAt=Date.now()+12000;ghostOn=false;$('role').innerHTML='ROLE: <b>'+role.toUpperCase()+'</b>';$('status').textContent=role==='seeker'?'FIND THEM':'HIDE. STAY ALIVE.';$('hint').textContent=role==='seeker'?'Find every hider before time runs out.':'Move, hide, and avoid the seeker. Ghosts may expose you.';setScreen('game');cancelAnimationFrame(raf);loop()});
 socket.on('positions',d=>{others=d});
 socket.on('roundEnd',d=>{toast(d.message);setTimeout(()=>{socket.emit('backToLobby')},2400)});
 socket.on('locationPing',d=>{if(d.id!==socket.id){flashMap(d.x,d.z);toast('⚠️ SOUND DETECTED — LOCATION PING!')}});
 socket.on('ghostEvent',d=>{if(d.target===socket.id||d.target==='all'){scare();}});
 function flashMap(x,z){const m=$('map').getContext('2d');m.fillStyle='#ff314a';m.beginPath();m.arc(75+(x/20)*65,75+(z/20)*65,9,0,Math.PI*2);m.fill();setTimeout(drawMap,1000)}
-function drawMap(){const m=$('map').getContext('2d');m.clearRect(0,0,150,150);m.fillStyle='#0a1720';m.fillRect(0,0,150,150);m.strokeStyle='#263d49';for(let i=20;i<150;i+=22){m.beginPath();m.moveTo(i,0);m.lineTo(i,150);m.stroke();m.beginPath();m.moveTo(0,i);m.lineTo(150,i);m.stroke()}if(mode==='solo'&&soloRun){for(const c of soloRun.clues){if(c.found)continue;m.fillStyle='#f5c451';m.beginPath();m.arc(75+c.x*3,75+c.z*3,4,0,7);m.fill()}if(soloRun.found===3){m.fillStyle='#58e39a';m.beginPath();m.arc(75+soloRun.exit.x*3,75+soloRun.exit.z*3,5,0,7);m.fill()}if(soloRun.found>0){m.fillStyle='#ff3548';m.beginPath();m.arc(75+soloRun.enemy.x*3,75+soloRun.enemy.z*3,4,0,7);m.fill()}}m.fillStyle='#56d6a0';m.beginPath();m.arc(75+pos.x*3,75+pos.z*3,4,0,7);m.fill()}
+function drawMap(){
+ const m=$('map').getContext('2d'),w=210,h=210,pad=8;m.clearRect(0,0,w,h);m.fillStyle='#061018';m.fillRect(0,0,w,h);
+ const mx=x=>pad+(x+18)/36*(w-pad*2),my=z=>pad+(z+18)/36*(h-pad*2),mw=v=>v/36*(w-pad*2),mh=v=>v/36*(h-pad*2);
+ m.fillStyle='#18242b';MAP_CORRIDORS.forEach(r=>m.fillRect(mx(r.x),my(r.z),mw(r.w),mh(r.h)));
+ MAP_ROOMS.forEach(r=>{m.fillStyle=r.tone;m.fillRect(mx(r.x),my(r.z),mw(r.w),mh(r.h));m.strokeStyle='#8ea4aa';m.lineWidth=1.4;m.strokeRect(mx(r.x),my(r.z),mw(r.w),mh(r.h));m.fillStyle='#d5e0e4';m.font='bold 6px system-ui';m.textAlign='center';m.fillText(r.name,mx(r.x+r.w/2),my(r.z+r.h/2)+2)});
+ MAP_CORRIDORS.forEach(r=>{m.strokeStyle='#637982';m.lineWidth=1;m.strokeRect(mx(r.x),my(r.z),mw(r.w),mh(r.h))});
+ const dot=(x,z,color,radius)=>{m.fillStyle=color;m.beginPath();m.arc(mx(x),my(z),radius,0,Math.PI*2);m.fill();m.strokeStyle='#071018';m.lineWidth=1;m.stroke()};
+ if(mode==='solo'&&soloRun){soloRun.clues.forEach(c=>{if(!c.found)dot(c.x,c.z,'#f5c451',2.4)});if(soloRun.found===3)dot(soloRun.exit.x,soloRun.exit.z,'#58e39a',3);if(soloRun.found>0)dot(soloRun.enemy.x,soloRun.enemy.z,'#ff3548',2.8)}
+ else Object.values(others).forEach(p=>{if(p)dot(p.x,p.z,p.role==='seeker'?'#ff5364':'#c6e7f0',2.6)});
+ dot(pos.x,pos.z,'#57e0a4',3.5);m.textAlign='left';m.fillStyle='#c4d0d5';m.font='bold 8px system-ui';m.fillText('FACILITY MAP',8,205);
+}
 function scare(){ $('scare').style.opacity=1;$('flash').style.opacity=.85;setTimeout(()=>$('flash').style.opacity=0,100);setTimeout(()=>$('scare').style.opacity=0,700);if(navigator.vibrate)navigator.vibrate([100,60,180])}
 const storyBooks=[
  {place:'BLACKWOOD HOSPITAL',threat:'THE MATRON',hook:'A voice message from {person} led you to this abandoned hospital. The recording ends with three knocks from inside a locked ward.',clues:[['Patient chart','The chart lists {person} as discharged at 2:13 AM. No doctor signed it.'],['Wet footprint','A trail of wet footprints stops at a wall, as if someone walked straight through it.'],['Voice recorder','A whisper says: “Do not let the Matron count you.”'],['Ward key','The key is warm. Someone was holding it moments ago.']],endings:['The ward door opens onto an empty room. Behind you, the hospital intercom whispers your name. You escaped—but the recording now contains your breathing.','You escape through the ambulance bay. At sunrise, every window in the hospital lights up at once.','You find {person}’s photograph in your pocket. The face has changed to yours.']},
@@ -130,37 +164,39 @@ const storyPalettes=[['#101923','#25313a','#05070b','#46504b'],['#1c1012','#3821
 const rand=(a,b)=>Math.random()*(b-a)+a;
 const pick=a=>a[Math.floor(Math.random()*a.length)];
 function shuffled(a){return [...a].sort(()=>Math.random()-.5)}
-function makePoint(existing){let p;do{p={x:Math.round(rand(-15,15)),z:Math.round(rand(-15,15))}}while(Math.hypot(p.x,p.z)<6||existing.some(q=>Math.hypot(q.x-p.x,q.z-p.z)<6));return p}
+function makePoint(existing){let p;do{p={x:Math.round(rand(-15,15)),z:Math.round(rand(-15,15))}}while(!canWalk(p.x,p.z)||Math.hypot(p.x,p.z)<6||existing.some(q=>Math.hypot(q.x-p.x,q.z-p.z)<5));return p}
 function startSoloStory(){
- mode='solo';$('mic').style.display='none';$('storyInfo').style.display='block';$('role').innerHTML='MODE: <b>SOLO STORY</b>';
+ mode='solo';$('storyInfo').style.display='block';$('role').innerHTML='MODE: <b>SOLO STORY</b>';
  let ix=Math.floor(Math.random()*storyBooks.length);if(ix===lastScenario)ix=(ix+1+Math.floor(Math.random()*(storyBooks.length-1)))%storyBooks.length;lastScenario=ix;
  const book=storyBooks[ix],person=pick(storyNames),time=pick(['2:13 AM','3:07 AM','12:41 AM','1:26 AM','4:04 AM']),selected=shuffled(book.clues).slice(0,3),points=[];
  const clues=selected.map((c,i)=>{const pt=makePoint(points);points.push(pt);return {label:c[0],text:c[1].replaceAll('{person}',person).replaceAll('{time}',time),...pt}});const exit=makePoint(points);
  const threatStart=makePoint([...points,exit]);
  soloRun={book,person,time,clues,exit,enemy:{...threatStart},palette:storyPalettes[ix],found:0,started:Date.now(),ended:false,ending:pick(book.endings).replaceAll('{person}',person),lastScare:Date.now()+rand(9000,17000),seed:Math.floor(Math.random()*999999)};
- pos={x:0,z:0};others={};keys={};$('status').textContent=book.place;$('timer').textContent='SOLO';$('count').textContent='CLUES 0 / 3';$('storyGoal').textContent='Find 3 pieces of evidence. Then reach the exit. Stay away from '+book.threat+'.';$('hint').textContent='WASD / arrows to move · SHIFT to sprint · E or USE to inspect evidence';$('role').innerHTML='THREAT: <b>'+book.threat+'</b>';$('interact').style.display='block';$('mic').style.display='none';toast(book.hook.replaceAll('{person}',person));setScreen('game');cancelAnimationFrame(raf);loop();
+ pos={x:0,z:0};others={};keys={};$('status').textContent=book.place;$('timer').textContent='SOLO';$('count').textContent='CLUES 0 / 3';$('storyGoal').textContent='Find 3 pieces of evidence. Then reach the exit. Stay away from '+book.threat+'.';$('hint').textContent='WASD / arrows to move · SHIFT to sprint · E or USE to inspect evidence';$('role').innerHTML='THREAT: <b>'+book.threat+'</b>';$('interact').style.display='block';toast(book.hook.replaceAll('{person}',person));setScreen('game');cancelAnimationFrame(raf);loop();
 }
 function interactSolo(){if(mode!=='solo'||!soloRun||soloRun.ended)return;let target=null;if(soloRun.found<soloRun.clues.length){target=soloRun.clues.filter(c=>!c.found).sort((a,b)=>Math.hypot(a.x-pos.x,a.z-pos.z)-Math.hypot(b.x-pos.x,b.z-pos.z))[0]}else target=soloRun.exit;
  if(!target)return;const d=Math.hypot(target.x-pos.x,target.z-pos.z);if(d>2.7){toast('Get closer to the glowing evidence marker.');return}
  if(target===soloRun.exit){finishSolo(true);return}target.found=true;soloRun.found++;toast(target.label+': '+target.text,6500);$('count').textContent='CLUES '+soloRun.found+' / 3';if(soloRun.found===3){$('storyGoal').textContent='All evidence found. Reach the EXIT marker and press E.';$('hint').textContent='The exit is marked on your map. Something is following you.'}else{$('storyGoal').textContent='Evidence '+soloRun.found+' / 3 found. Find the remaining clues.';$('hint').textContent='You heard movement in the dark. Keep moving. Press E near glowing evidence.'}if(soloRun.found>=1&&Math.random()<.75)scare();
 }
 function finishSolo(won){if(!soloRun||soloRun.ended)return;soloRun.ended=true;keys={};$('endTitle').textContent=won?'YOU ESCAPED':'THE DARK FOUND YOU';$('endText').textContent=won?soloRun.ending:'You were caught by '+soloRun.book.threat+' in '+soloRun.book.place+'. Every new attempt generates a different story, clue order and layout.';$('again').textContent='Play another random story';$('endPanel').style.display='grid';if(won)toast('STORY COMPLETE');else scare()}
-$('interact').onclick=interactSolo;$('again').onclick=()=>startSoloStory();$('homeBtn').onclick=()=>{mode='multi';soloRun=null;$('storyInfo').style.display='none';$('interact').style.display='none';$('mic').style.display='block';setScreen('home')};
+$('interact').onclick=interactSolo;$('again').onclick=()=>startSoloStory();$('homeBtn').onclick=()=>{mode='multi';soloRun=null;$('storyInfo').style.display='none';$('interact').style.display='none';setScreen('home')};
 $('touchControls').querySelectorAll('button[data-dir]').forEach(b=>{const k=b.dataset.dir==='up'?'w':b.dataset.dir==='down'?'s':b.dataset.dir==='left'?'a':'d';b.addEventListener('pointerdown',e=>{e.preventDefault();keys[k]=true});['pointerup','pointercancel','pointerleave'].forEach(ev=>b.addEventListener(ev,e=>{e.preventDefault();keys[k]=false}))});
-function updateSolo(){if(!soloRun||soloRun.ended)return;const sprint=!!keys.shift;let speed=sprint?.19:.12;if(soloRun.found>0){const e=soloRun.enemy,dx=pos.x-e.x,dz=pos.z-e.z,dist=Math.hypot(dx,dz)||1;const espeed=soloRun.found===1?.018:soloRun.found===2?.032:.046;e.x+=dx/dist*espeed;e.z+=dz/dist*espeed;if(dist<1.35){finishSolo(false);return}}if(Date.now()>soloRun.lastScare){soloRun.lastScare=Date.now()+rand(13000,24000);if(Math.random()<.8)scare()}$('count').textContent='CLUES '+soloRun.found+' / 3'+(soloRun.found?'  ·  '+soloRun.book.threat+' NEARBY':'');}
+function updateSolo(){if(!soloRun||soloRun.ended)return;const sprint=!!keys.shift;let speed=sprint?.19:.12;if(soloRun.found>0){const e=soloRun.enemy,dx=pos.x-e.x,dz=pos.z-e.z,dist=Math.hypot(dx,dz)||1;const espeed=soloRun.found===1?.018:soloRun.found===2?.032:.046;const ex=e.x+dx/dist*espeed,ez=e.z+dz/dist*espeed;if(canWalk(ex,e.z))e.x=ex;if(canWalk(e.x,ez))e.z=ez;if(dist<1.35){finishSolo(false);return}}if(Date.now()>soloRun.lastScare){soloRun.lastScare=Date.now()+rand(13000,24000);if(Math.random()<.8)scare()}$('count').textContent='CLUES '+soloRun.found+' / 3'+(soloRun.found?'  ·  '+soloRun.book.threat+' NEARBY':'');}
 
-function loop(){raf=requestAnimationFrame(loop);if(state!=='game')return;let speed=mode==='solo'&&keys.shift?.19:.12;if(keys.w||keys.ArrowUp)pos.z-=speed;if(keys.s||keys.ArrowDown)pos.z+=speed;if(keys.a||keys.ArrowLeft)pos.x-=speed;if(keys.d||keys.ArrowRight)pos.x+=speed;pos.x=Math.max(-18,Math.min(18,pos.x));pos.z=Math.max(-18,Math.min(18,pos.z));if(mode==='multi'){socket.emit('move',{...pos,avatar});let sec=Math.max(0,180-Math.floor((Date.now()-startedAt)/1000));$('timer').textContent=String(Math.floor(sec/60)).padStart(2,'0')+':'+String(sec%60).padStart(2,'0');$('count').textContent=Object.keys(others).length+1+' players online';if(Date.now()>ghostAt){ghostAt=Date.now()+18000+Math.random()*16000;if(Math.random()<.8){scare();socket.emit('ghostSeen')}}}else{updateSolo();if(soloRun){let elapsed=Math.floor((Date.now()-soloRun.started)/1000);$('timer').textContent=String(Math.floor(elapsed/60)).padStart(2,'0')+':'+String(elapsed%60).padStart(2,'0')}}drawWorld();drawMap()}
-function drawWorld(){ctx.clearRect(0,0,W,H);let g=ctx.createLinearGradient(0,0,0,H),palette=mode==='solo'&&soloRun?soloRun.palette:['#101b22','#202a2b','#05080b','#46504b'];g.addColorStop(0,palette[0]);g.addColorStop(.55,palette[1]);g.addColorStop(1,palette[2]);ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
-let cx=W/2,cy=H*.56,scale=Math.min(W,H)*.022;ctx.strokeStyle=palette[3];ctx.lineWidth=3*devicePixelRatio;for(let i=-18;i<=18;i+=3){ctx.beginPath();ctx.moveTo(cx+(i-pos.x)*scale,cy+( -18-pos.z)*scale);ctx.lineTo(cx+(i-pos.x)*scale,cy+(18-pos.z)*scale);ctx.stroke();ctx.beginPath();ctx.moveTo(cx+(-18-pos.x)*scale,cy+(i-pos.z)*scale);ctx.lineTo(cx+(18-pos.x)*scale,cy+(i-pos.z)*scale);ctx.stroke()}
-for(let i=0;i<10;i++){let x=((i*13)%35-17-pos.x)*scale+cx,y=((i*19)%35-17-pos.z)*scale+cy;ctx.fillStyle=i%2?'#26352f':'#3c3530';ctx.fillRect(x-10*devicePixelRatio,y-14*devicePixelRatio,20*devicePixelRatio,28*devicePixelRatio)}
-for(const [id,p] of Object.entries(others)){if(!p)continue;let x=cx+(p.x-pos.x)*scale,y=cy+(p.z-pos.z)*scale;drawCharacter(x,y,p.avatar,1.15,p.role==='seeker')}if(mode==='solo'&&soloRun){for(const c of soloRun.clues){if(c.found)continue;let x=cx+(c.x-pos.x)*scale,y=cy+(c.z-pos.z)*scale;ctx.fillStyle='#f5c451';ctx.shadowColor='#f5c451';ctx.shadowBlur=18*devicePixelRatio;ctx.beginPath();ctx.arc(x,y,8*devicePixelRatio,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;ctx.fillStyle='#fff';ctx.font=`${10*devicePixelRatio}px sans-serif`;ctx.fillText('?',x-3*devicePixelRatio,y+4*devicePixelRatio)}if(soloRun.found===3){let x=cx+(soloRun.exit.x-pos.x)*scale,y=cy+(soloRun.exit.z-pos.z)*scale;ctx.fillStyle='#58e39a';ctx.shadowColor='#58e39a';ctx.shadowBlur=20*devicePixelRatio;ctx.beginPath();ctx.arc(x,y,10*devicePixelRatio,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0}if(soloRun.found>0){let e=soloRun.enemy,x=cx+(e.x-pos.x)*scale,y=cy+(e.z-pos.z)*scale;ctx.fillStyle='#e5223c';ctx.shadowColor='#ff001e';ctx.shadowBlur=20*devicePixelRatio;ctx.beginPath();ctx.arc(x,y,9*devicePixelRatio,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0}}
-drawCharacter(cx,cy,avatar,1.65,role==='seeker');let vign=ctx.createRadialGradient(cx,cy,Math.min(W,H)*.12,cx,cy,Math.max(W,H)*.65);vign.addColorStop(0,'#0000');vign.addColorStop(1,'#000d');ctx.fillStyle=vign;ctx.fillRect(0,0,W,H)}
+function loop(){raf=requestAnimationFrame(loop);if(state!=='game')return;let speed=mode==='solo'&&keys.shift?.19:.12;let dx=0,dz=0;if(keys.w||keys.arrowup)dz-=speed;if(keys.s||keys.arrowdown)dz+=speed;if(keys.a||keys.arrowleft)dx-=speed;if(keys.d||keys.arrowright)dx+=speed;const magnitude=Math.hypot(dx,dz)||1;dx=dx/magnitude*speed;dz=dz/magnitude*speed;if(canWalk(pos.x+dx,pos.z))pos.x+=dx;if(canWalk(pos.x,pos.z+dz))pos.z+=dz;if(mode==='multi'){socket.emit('move',{...pos,avatar});let sec=Math.max(0,180-Math.floor((Date.now()-startedAt)/1000));$('timer').textContent=String(Math.floor(sec/60)).padStart(2,'0')+':'+String(sec%60).padStart(2,'0');$('count').textContent=Object.keys(others).length+1+' players online';if(Date.now()>ghostAt){ghostAt=Date.now()+18000+Math.random()*16000;if(Math.random()<.8){scare();socket.emit('ghostSeen')}}}else{updateSolo();if(soloRun){let elapsed=Math.floor((Date.now()-soloRun.started)/1000);$('timer').textContent=String(Math.floor(elapsed/60)).padStart(2,'0')+':'+String(elapsed%60).padStart(2,'0')}}drawWorld();drawMap()}
+function drawWorld(){
+ ctx.clearRect(0,0,W,H);ctx.fillStyle='#03070b';ctx.fillRect(0,0,W,H);
+ const cx=W/2,cy=H/2,scale=Math.min(W,H)*.0205*devicePixelRatio,sx=x=>cx+(x-pos.x)*scale,sy=z=>cy+(z-pos.z)*scale;
+ MAP_CORRIDORS.forEach(r=>{const x=sx(r.x),y=sy(r.z),w=r.w*scale,h=r.h*scale;ctx.fillStyle='#18252b';ctx.fillRect(x,y,w,h);ctx.strokeStyle='#657a80';ctx.lineWidth=3*devicePixelRatio;ctx.strokeRect(x,y,w,h)});
+ MAP_ROOMS.forEach(r=>{const x=sx(r.x),y=sy(r.z),w=r.w*scale,h=r.h*scale;ctx.fillStyle=r.tone;ctx.fillRect(x,y,w,h);ctx.fillStyle='#ffffff08';for(let gx=1;gx<r.w;gx+=2)ctx.fillRect(x+gx*scale,y+4*devicePixelRatio,1*devicePixelRatio,h-8*devicePixelRatio);for(let gz=1;gz<r.h;gz+=2)ctx.fillRect(x+4*devicePixelRatio,y+gz*scale,w-8*devicePixelRatio,1*devicePixelRatio);ctx.strokeStyle='#a5b8ba';ctx.lineWidth=4*devicePixelRatio;ctx.strokeRect(x,y,w,h);ctx.fillStyle='#e1ecee';ctx.font='bold '+(Math.max(10,12*devicePixelRatio))+'px system-ui';ctx.textAlign='center';ctx.fillText(r.name,x+w/2,y+18*devicePixelRatio)});
+ MAP_CORRIDORS.forEach(r=>{ctx.strokeStyle='#71868b';ctx.lineWidth=3*devicePixelRatio;ctx.strokeRect(sx(r.x),sy(r.z),r.w*scale,r.h*scale)});
+ MAP_PROPS.forEach(o=>{const x=sx(o.x),y=sy(o.z),w=o.w*scale,h=o.h*scale;ctx.fillStyle='#0008';ctx.fillRect(x+3*devicePixelRatio,y+4*devicePixelRatio,w,h);ctx.fillStyle=o.c;ctx.fillRect(x,y,w,h);ctx.strokeStyle='#dce8e855';ctx.lineWidth=1.4*devicePixelRatio;ctx.strokeRect(x,y,w,h);ctx.fillStyle='#c7d5da88';ctx.fillRect(x+w*.18,y+h*.2,w*.64,h*.18)});
+ if(mode==='solo'&&soloRun){for(const c of soloRun.clues){if(c.found)continue;const x=sx(c.x),y=sy(c.z);ctx.fillStyle='#f5c451';ctx.shadowColor='#f5c451';ctx.shadowBlur=18*devicePixelRatio;ctx.beginPath();ctx.arc(x,y,8*devicePixelRatio,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;ctx.fillStyle='#1a2022';ctx.font='bold '+(10*devicePixelRatio)+'px sans-serif';ctx.textAlign='center';ctx.fillText('?',x,y+4*devicePixelRatio)}if(soloRun.found===3){const x=sx(soloRun.exit.x),y=sy(soloRun.exit.z);ctx.fillStyle='#58e39a';ctx.shadowColor='#58e39a';ctx.shadowBlur=20*devicePixelRatio;ctx.beginPath();ctx.arc(x,y,10*devicePixelRatio,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;ctx.fillStyle='#06130d';ctx.font='bold '+(8*devicePixelRatio)+'px sans-serif';ctx.textAlign='center';ctx.fillText('EXIT',x,y+3*devicePixelRatio)}if(soloRun.found>0){const e=soloRun.enemy,x=sx(e.x),y=sy(e.z);ctx.fillStyle='#e5223c';ctx.shadowColor='#ff001e';ctx.shadowBlur=20*devicePixelRatio;ctx.beginPath();ctx.arc(x,y,9*devicePixelRatio,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0}}
+ if(mode==='multi'){for(const [id,p] of Object.entries(others)){if(!p)continue;const x=sx(p.x),y=sy(p.z);drawCharacter(x,y,p.avatar,1.15,p.role==='seeker');if(p.name){ctx.fillStyle='#f2f6f7';ctx.font='bold '+(9*devicePixelRatio)+'px system-ui';ctx.textAlign='center';ctx.fillText(String(p.name).slice(0,14),x,y-25*devicePixelRatio)}}}
+ drawCharacter(cx,cy,avatar,1.65,role==='seeker');
+ const vign=ctx.createRadialGradient(cx,cy,Math.min(W,H)*.18,cx,cy,Math.max(W,H)*.68);vign.addColorStop(0,'#0000');vign.addColorStop(1,'#000b');ctx.fillStyle=vign;ctx.fillRect(0,0,W,H);
+}
 addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=true;if(e.key.toLowerCase()==='e'&&!e.repeat&&mode==='solo')interactSolo();if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key))e.preventDefault()});addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
-$('mic').onclick=async()=>{if(!voiceStream){try{voiceStream=await navigator.mediaDevices.getUserMedia({audio:true});$('mic').textContent='🎙 Voice enabled';$('mic').classList.add('live');socket.emit('voiceReady')}catch(e){toast('Mic permission denied or unavailable')}}else{voiceStream.getTracks().forEach(t=>t.stop());voiceStream=null;$('mic').textContent='🎙 Enable voice';$('mic').classList.remove('live')}};
-// WebRTC peer voice mesh, with Socket.IO used only for signaling.
-socket.on('voicePeers',ids=>ids.forEach(id=>makePeer(id,true)));
-socket.on('voiceSignal',async({from,data})=>{let pc=peerConnections[from]||makePeer(from,false);if(data.description){await pc.setRemoteDescription(data.description);if(data.description.type==='offer'){let a=await pc.createAnswer();await pc.setLocalDescription(a);socket.emit('voiceSignal',{to:from,data:{description:pc.localDescription}})}}else if(data.candidate){try{await pc.addIceCandidate(data.candidate)}catch{}}});
-function makePeer(id,offer){if(!voiceStream||peerConnections[id])return peerConnections[id];let pc=new RTCPeerConnection({iceServers:[{urls:'stun:stun.l.google.com:19302'}]});peerConnections[id]=pc;voiceStream.getTracks().forEach(t=>pc.addTrack(t,voiceStream));pc.onicecandidate=e=>{if(e.candidate)socket.emit('voiceSignal',{to:id,data:{candidate:e.candidate}})};pc.ontrack=e=>{let a=audioEls[id]||new Audio();audioEls[id]=a;a.srcObject=e.streams[0];a.play().catch(()=>{})};if(offer)pc.createOffer().then(o=>pc.setLocalDescription(o)).then(()=>socket.emit('voiceSignal',{to:id,data:{description:pc.localDescription}}));return pc}
-socket.on('backLobby',d=>{Object.values(peerConnections).forEach(p=>p.close());peerConnections={};setScreen('lobby');enterLobby(d)});
+socket.on('backLobby',d=>{setScreen('lobby');enterLobby(d)});
 })();
 </script></body></html>
