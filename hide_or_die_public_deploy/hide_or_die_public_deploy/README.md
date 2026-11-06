@@ -1,45 +1,65 @@
-# HIDE OR DIE — Public Multiplayer Deployment
+# HIDE OR DIE — Blackridge Research Facility
 
-This is the same HIDE OR DIE browser game (private multiplayer rooms, solo horror story, and character customization), with Render deployment configuration added.
+HIDE OR DIE is a browser-based first-person survival-horror prototype built with Three.js, Express and Socket.IO. It runs as a Node.js web service and supports private co-op rooms.
 
-## Run on your own PC
+## What is implemented
 
-1. Install Node.js 18 or newer.
-2. Open Command Prompt in the folder containing `package.json`.
-3. Run `npm install`, then `npm start`.
-4. Open `http://localhost:3000`.
+- First-person 3D camera with mouse look, WASD movement, sprinting, crouching and pointer-lock controls.
+- Procedurally assembled 12-room research facility: Cafeteria, Security, Med Bay, Offices, Storage, Central Hub, Laboratory, Isolation, Loading Bay, Generator, Reactor and Emergency Exit.
+- Flashlight with a draining battery, visible first-person arms/flashlight, minimap, stamina, mission timer and interaction prompts.
+- Locker hiding spots. Hidden operators are ignored by the monster's target selection until they leave the locker.
+- Three power-cell objectives and an emergency extraction objective.
+- Multiplayer private room codes for 2–10 players. Host-controlled start, shared player positions, shared objectives and a server-simulated monster that patrols, investigates noise/running and chases visible survivors.
+- Solo incidents with changing incident narrative, clue labels, collectible positions and an escalating local monster.
+- Procedural ambient drone, footsteps, interaction tones, threat stingers and jump-scare audio using Web Audio.
+- No player voice chat. The game does not request microphone permission or access the microphone.
+- `/healthz` endpoint for service health checks.
 
-## Publish it so friends on other networks can join (Render)
+## Controls
 
-This game is a Node.js + Express + Socket.IO app. It must be deployed as a **Web Service**, not as a Static Site, because Socket.IO needs a running server and WebSocket support.
+| Action | Keyboard / mouse |
+|---|---|
+| Move | W, A, S, D |
+| Look | Mouse (click the game view to lock the pointer) |
+| Sprint | Shift |
+| Crouch | Ctrl |
+| Flashlight | F |
+| Hide / leave locker | H near a locker |
+| Interact / collect / extract | E |
+| Release mouse | Esc |
 
-1. Extract this ZIP.
-2. Sign in to GitHub and create a new repository (for example `hide-or-die`).
-3. Upload the CONTENTS of this folder to the repository root. The root must show `package.json`, `server.js`, `render.yaml`, and the `public` folder. Do not upload only the ZIP file or place everything inside an extra nested folder.
-4. Sign in to Render and choose **New + → Blueprint** (or create a **New + → Web Service** and connect that GitHub repository).
-5. If using Blueprint, Render reads `render.yaml`. If creating a Web Service manually, use:
-   - Runtime/Language: `Node`
-   - Build Command: `npm install`
-   - Start Command: `npm start`
-   - Instance type: `Free` (for testing)
-6. Wait for the deploy to show **Live**, then open the `https://...onrender.com` URL shown by Render.
-7. Share that exact HTTPS URL with friends. Everyone opens it, and one player creates a private room; friends join using the room code.
+## Run locally
 
-## Important notes
+Requires Node.js 20 or newer.
 
-- The server listens on `0.0.0.0` and uses Render's `PORT` environment variable, as required for public web services.
-- Render Web Services support WebSockets, which Socket.IO uses for real-time rooms and player updates.
-- Free Render web services can sleep after 15 minutes without inbound traffic. The next visit/connection can take about a minute to wake up. A restart/sleep can clear rooms because this prototype stores active rooms in server memory. Create a fresh room after reconnecting.
-- Keep the game on one server instance for now. The current in-memory room system is not designed to synchronize rooms across multiple server instances.
-- HTTPS on Render supports browser microphone permission. Voice chat can still fail on some networks without a production TURN server; movement/rooms do not depend on voice.
+```bash
+npm install
+npm start
+```
 
-## Features
+Open `http://localhost:3000` in a modern desktop browser with WebGL enabled.
 
-- Private multiplayer rooms for 2–10 players
-- Character customization with browser-local saved design and shared room avatar
-- Solo horror story with random scenarios, clues, threat events, and endings
-- Keyboard and mobile touch controls
+Run the small geometry test suite with:
 
-## Prototype limitations
+```bash
+npm test
+```
 
-This is a playable prototype, not a finished production game. Room state is in memory, voice uses basic WebRTC/STUN, and the visual arena is canvas pseudo-3D rather than photorealistic 3D.
+## Render deployment
+
+This must be a **Node Web Service**, not a static site, because Socket.IO needs a running server and WebSocket support.
+
+- Root directory: `hide_or_die_public_deploy/hide_or_die_public_deploy`
+- Build command: `npm install`
+- Start command: `npm start`
+- Runtime: Node
+
+The service listens on `0.0.0.0` and uses Render's `PORT` environment variable. The `render.yaml` health-check path is `/healthz`.
+
+The current deployment is designed for one server instance. Room data is held in memory, so a service restart clears active rooms. A free Render instance may sleep when idle; the first connection after sleep can take longer. Players should use a fresh room code after a restart.
+
+## Current prototype limits
+
+This is now a playable 3D first-person prototype, not a photorealistic AAA release. The environment, props, monster and first-person hands are procedural geometry; they are not scan-based photoreal assets or motion-captured animation. Solo incidents vary story text, clue selection and clue placement inside the same Blackridge facility; they do not yet load separate hospital, motel, school or mansion maps. Co-op match state and monster logic are server-side, but this is not yet a hardened production backend with persistent accounts, matchmaking, anti-cheat, reconnect recovery, moderation, or multi-instance room storage.
+
+A modern browser and a discrete or integrated GPU with WebGL support are recommended. Performance varies by device.
