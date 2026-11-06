@@ -13,6 +13,15 @@ const rooms = new Map();
 const makeCode = () => crypto.randomBytes(3).toString('hex').toUpperCase();
 const cleanName = value => String(value || 'Player').trim().slice(0, 16) || 'Player';
 const DEFAULT_AVATAR = { skin: '#c6865b', hair: '#24201e', outfit: '#334c63', pants: '#22252b', hairStyle: 'short', outfitStyle: 'hoodie', accessory: 'none' };
+const WALKABLE=[
+ {x:-16,z:-16,w:11,h:9},{x:-16,z:-4,w:9,h:8},{x:-16,z:7,w:11,h:9},
+ {x:5,z:-16,w:11,h:9},{x:7,z:-4,w:9,h:8},{x:5,z:7,w:11,h:9},
+ {x:-4,z:-4,w:8,h:8},
+ {x:-5.8,z:-10,w:11.6,h:3.6},{x:-1.8,z:-7.5,w:3.6,h:4},
+ {x:-7.5,z:-1.8,w:4,h:3.6},{x:3.5,z:-1.8,w:4,h:3.6},
+ {x:-5.8,z:3.5,w:11.6,h:3.7}
+];
+function isWalkable(x,z){const m=.22;return WALKABLE.some(r=>x>=r.x+m&&x<=r.x+r.w-m&&z>=r.z+m&&z<=r.z+r.h-m)}
 const cleanAvatar = value => {
   const a = value && typeof value === 'object' ? value : {};
   const color = (v, fallback) => /^#[0-9a-f]{6}$/i.test(String(v || '')) ? v : fallback;
@@ -44,7 +53,6 @@ function leave(socket) {
   socket.data.room = null;
   if (!room) return;
   room.players.delete(socket.id);
-  room.voice.delete(socket.id);
   socket.leave(roomCode);
   if (!room.players.size) {
     rooms.delete(roomCode);
@@ -67,7 +75,6 @@ io.on('connection', socket => {
       started: false,
       positions: {},
       roles: {},
-      voice: new Set()
     };
     rooms.set(roomCode, room);
     room.players.set(socket.id, { id: socket.id, name: cleanName(payload && payload.name), avatar: cleanAvatar(payload && payload.avatar) });
@@ -124,11 +131,12 @@ io.on('connection', socket => {
   socket.on('move', position => {
     const room = rooms.get(socket.data.room);
     if (!room || !room.started || !room.players.has(socket.id)) return;
-    room.positions[socket.id] = {
-      x: Math.max(-18, Math.min(18, Number(position && position.x) || 0)),
-      z: Math.max(-18, Math.min(18, Number(position && position.z) || 0)),
-      role: room.roles[socket.id],
-      avatar: room.players.get(socket.id).avatar
+    const x=Math.max(-18,Math.min(18,Number(position&&position.x)||0));
+    const z=Math.max(-18,Math.min(18,Number(position&&position.z)||0));
+    if(!isWalkable(x,z))return;
+    room.positions[socket.id]={
+      x,z,role:room.roles[socket.id],name:room.players.get(socket.id).name,
+      avatar:room.players.get(socket.id).avatar
     };
     socket.to(room.code).emit('positions', room.positions);
     const seeker = [...room.players.keys()].find(id => room.roles[id] === 'seeker');
@@ -148,19 +156,6 @@ io.on('connection', socket => {
     io.to(room.code).emit('ghostEvent', { target: socket.id });
     const position = room.positions[socket.id];
     if (position) io.to(room.code).emit('locationPing', { id: socket.id, x: position.x, z: position.z });
-  });
-
-  socket.on('voiceReady', () => {
-    const room = rooms.get(socket.data.room);
-    if (!room) return;
-    const peers = [...room.voice].filter(id => id !== socket.id);
-    socket.emit('voicePeers', peers);
-    room.voice.add(socket.id);
-    socket.to(room.code).emit('voicePeers', [socket.id]);
-  });
-
-  socket.on('voiceSignal', payload => {
-    if (payload && payload.to && payload.data) socket.to(payload.to).emit('voiceSignal', { from: socket.id, data: payload.data });
   });
 
   socket.on('backToLobby', () => {
