@@ -21,7 +21,20 @@ const WALKABLE=[
  {x:-7.5,z:-1.8,w:4,h:3.6},{x:3.5,z:-1.8,w:4,h:3.6},
  {x:-5.8,z:3.5,w:11.6,h:3.7}
 ];
-function isWalkable(x,z){const m=.22;return WALKABLE.some(r=>x>=r.x+m&&x<=r.x+r.w-m&&z>=r.z+m&&z<=r.z+r.h-m)}
+const SOLIDS=[
+ {x:-12,z:-12,w:2.1,h:1.1},{x:-8,z:-12,w:1.8,h:1.1},
+ {x:-12,z:0,w:1.3,h:2.5},{x:-9,z:0,w:1.3,h:2.5},
+ {x:-12,z:11,w:2,h:2},{x:-8,z:12,w:2,h:1.6},
+ {x:8,z:-12,w:2.3,h:1.4},{x:12,z:-12,w:2.3,h:1.4},
+ {x:10,z:0,w:2,h:1.4},{x:12,z:2,w:1.5,h:1.2},
+ {x:8,z:12,w:2.4,h:1.4},{x:12,z:12,w:2.4,h:1.4},
+ {x:-1.5,z:-1.5,w:1.1,h:1.1},{x:1.5,z:1.5,w:1.1,h:1.1}
+];
+function isWalkable(x,z){
+ const m=.22,inside=WALKABLE.some(r=>x>=r.x+m&&x<=r.x+r.w-m&&z>=r.z+m&&z<=r.z+r.h-m);
+ const blocked=SOLIDS.some(o=>x>o.x-.58&&x<o.x+o.w+.58&&z>o.z-.58&&z<o.z+o.h+.58);
+ return inside&&!blocked;
+}
 const cleanAvatar = value => {
   const a = value && typeof value === 'object' ? value : {};
   const color = (v, fallback) => /^#[0-9a-f]{6}$/i.test(String(v || '')) ? v : fallback;
