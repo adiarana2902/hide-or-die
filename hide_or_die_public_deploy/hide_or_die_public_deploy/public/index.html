@@ -165,7 +165,7 @@ function init3D(){
   if(state.renderer)return;
   const canvas=$('gameCanvas');
   state.renderer=new THREE.WebGLRenderer({canvas,antialias:true,powerPreference:'high-performance'});
-  state.renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.65));
+  state.renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.65));state.renderer.shadowMap.enabled=true;state.renderer.shadowMap.type=THREE.PCFSoftShadowMap;
   state.renderer.setSize(window.innerWidth,window.innerHeight,false);
   state.renderer.outputColorSpace=THREE.SRGBColorSpace;
   state.renderer.toneMapping=THREE.ACESFilmicToneMapping;
@@ -178,7 +178,7 @@ function init3D(){
   state.scene.add(state.camera);
   const hemi=new THREE.HemisphereLight(0x93a8b8,0x17110d,0.34);state.scene.add(hemi);
   const ambient=new THREE.AmbientLight(0x26343d,0.24);state.scene.add(ambient);
-  const fill=new THREE.DirectionalLight(0x5e7185,0.35);fill.position.set(-12,18,4);state.scene.add(fill);
+  const fill=new THREE.DirectionalLight(0x5e7185,0.35);fill.position.set(-12,18,4);fill.castShadow=true;fill.shadow.mapSize.set(1024,1024);fill.shadow.camera.near=.5;fill.shadow.camera.far=48;state.scene.add(fill);
   buildFacility();buildViewModel();buildMonster();
   state.clock=new THREE.Clock();
   window.addEventListener('resize',resize3D);
@@ -189,7 +189,7 @@ function init3D(){
 }
 function resize3D(){if(!state.renderer)return;state.renderer.setSize(innerWidth,innerHeight,false);state.camera.aspect=innerWidth/innerHeight;state.camera.updateProjectionMatrix();}
 function material(color,roughness=.86,metalness=.05,extra={}){return new THREE.MeshStandardMaterial({color,roughness,metalness,...extra});}
-function addBox(parent,w,h,d,x,y,z,mat){const mesh=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat);mesh.position.set(x,y,z);mesh.castShadow=false;mesh.receiveShadow=true;parent.add(mesh);return mesh;}
+function addBox(parent,w,h,d,x,y,z,mat){const mesh=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat);mesh.position.set(x,y,z);mesh.castShadow=true;mesh.receiveShadow=true;parent.add(mesh);return mesh;}
 function addWall(parent,x1,z1,x2,z2,mat){const dx=x2-x1,dz=z2-z1;const length=Math.hypot(dx,dz);const box=addBox(parent,Math.abs(dx)<.01?.24:length,3.65,Math.abs(dz)<.01?.24:length,(x1+x2)/2,1.82,(z1+z2)/2,mat);return box;}
 function addWallWithDoor(parent,x1,z1,x2,z2,door,mat){
   const dx=x2-x1,dz=z2-z1,length=Math.hypot(dx,dz);
