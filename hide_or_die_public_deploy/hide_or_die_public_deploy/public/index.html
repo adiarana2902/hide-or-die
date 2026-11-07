@@ -273,7 +273,7 @@ function updateWorld(world){
   drawMiniMap();
 }
 function startWorld(mode,world,players,scenario){
-  init3D();state.mode=mode;state.world=world;state.hidden=false;state.dead=false;state.stamina=100;state.battery=100;state.flashlightOn=true;state.localRun=mode==='solo'?{scenario,found:0,enemy:{x:world.monster.x,z:world.monster.z},startedAt:Date.now(),graceUntil:Date.now()+20000,lastKnown:null,searchUntil:0,noiseUntil:0,patrolIndex:0,lastScare:Date.now()+18000}:null;
+  init3D();state.keys={};state.dead=false;state.hidden=false;state.running=false;state.crouched=false;state.stamina=100;state.battery=100;state.flashlightOn=true;state.mode=mode;state.world=world;state.hidden=false;state.dead=false;state.stamina=100;state.battery=100;state.flashlightOn=true;state.localRun=mode==='solo'?{scenario,found:0,enemy:{x:world.monster.x,z:world.monster.z},startedAt:Date.now(),graceUntil:Date.now()+20000,lastKnown:null,searchUntil:0,noiseUntil:0,patrolIndex:0,lastScare:Date.now()+18000}:null;
   const self=(players||[]).find(player=>player.id===socket.id);state.localPos=self?{x:self.x,z:self.z}:{x:-6,z:2.5};state.yaw=0;state.pitch=0;state.keys={};state.monster.visible=true;state.monster.position.set(world.monster.x,0,world.monster.z);state.monsterTarget={x:world.monster.x,z:world.monster.z,state:'patrol'};state.lastScare=0;state.lastSync=0;
   clearObjectiveMeshes();world.objectives.forEach((item,index)=>{if(!item.collected)createObjectiveMesh(item,index);});
   for(const mesh of state.remotePlayers.values())state.scene.remove(mesh);state.remotePlayers.clear();for(const player of (players||[])){if(player.id!==socket.id)addRemotePlayer(player);}
@@ -297,7 +297,7 @@ function updateRemotePlayers(players){
   for(const [id,mesh] of state.remotePlayers){if(!active.has(id)){state.scene.remove(mesh);state.remotePlayers.delete(id);}}
 }
 function startSolo(){
-  const scenario=randomFrom(SCENARIOS);const chosen=shuffled(OBJECTIVE_SPOTS).slice(0,3);const objectives=chosen.map((spot,index)=>({id:`solo-cell-${index+1}`,x:spot.x,z:spot.z,label:scenario.clues[index],collected:false}));
+  const scenario=randomFrom(SCENARIOS);const spawn={x:-6,z:2.5};const valid=window.HODSoloCore.chooseObjectives(OBJECTIVE_SPOTS,(x,z)=>isPlayerClear(x,z,.22),spawn,3);const chosen=valid.length===3?valid:shuffled(OBJECTIVE_SPOTS).slice(0,3);const objectives=chosen.map((spot,index)=>({id:`solo-cell-${index+1}`,x:spot.x,z:spot.z,label:scenario.clues[index],collected:false}));
   const world={objectives,exit:{x:18,z:12},monster:{x:18,z:-12,state:'patrol'},timeLeft:360,exitUnlocked:false};startWorld('solo',world,[],scenario);
 }
 function interact(){
@@ -333,7 +333,7 @@ function updateSolo(dt){
   const now=Date.now(),patrol=[{x:18,z:-12},{x:6,z:-12},{x:-6,z:-12},{x:-18,z:-12},{x:-18,z:0},{x:-18,z:12},{x:-6,z:12},{x:6,z:12},{x:18,z:12},{x:18,z:0},{x:6,z:0},{x:-6,z:0}];
   const enemy=run.enemy,playerDistance=distance(enemy,state.localPos);let target=null,threat='patrol',speed=.82;
   if(now>=run.graceUntil&&!state.hidden){
-    const heard=state.running&&playerDistance<18,seen=playerDistance<(state.crouched?4.5:8.5);
+    const heard=state.running&&playerDistance<20,seen=playerDistance<(state.crouched?4.2:10)&&window.HODSoloCore.canSeeTarget(enemy,state.localPos,(x,z)=>isPlayerClear(x,z,.05));
     if(heard||seen){run.lastKnown={x:state.localPos.x,z:state.localPos.z};run.searchUntil=now+4800;}
     if(run.noiseUntil>now&&!run.lastKnown){run.lastKnown={x:state.localPos.x,z:state.localPos.z};run.searchUntil=run.noiseUntil;}
     if(run.lastKnown&&now<run.searchUntil){target=run.lastKnown;threat=playerDistance<4?'chase':'investigate';speed=threat==='chase'?2.2:1.35;}
@@ -350,7 +350,8 @@ function updateMovement(dt){
   if(state.hidden||state.dead)return;
   const keys=state.keys;const f=(keys.KeyW||keys.ArrowUp?1:0)-(keys.KeyS||keys.ArrowDown?1:0);const s=(keys.KeyD||keys.ArrowRight?1:0)-(keys.KeyA||keys.ArrowLeft?1:0);const moving=!!(f||s);const sprint=moving&&(keys.ShiftLeft||keys.ShiftRight)&&state.stamina>1;const crouch=keys.ControlLeft||keys.ControlRight;state.running=!!(sprint&&!crouch);state.crouched=!!crouch;
   if(sprint)state.stamina=Math.max(0,state.stamina-29*dt);else state.stamina=Math.min(100,state.stamina+18*dt);
-  const speed=crouch?1.55:sprint?5.15:3.05;const delta=window.HODSoloCore.movementDelta(state.yaw,f,s,speed*dt);const moved=window.HODSoloCore.resolveMove(state.localPos,delta,(x,z)=>isPlayerClear(x,z,.34),.10);state.localPos.x=moved.x;state.localPos.z=moved.z;\n  state.camera.position.x=state.localPos.x;state.camera.position.z=state.localPos.z;const targetHeight=crouch?1.05:1.68;state.camera.position.y=THREE.MathUtils.damp(state.camera.position.y,targetHeight,12,dt);state.camera.rotation.order='YXZ';state.camera.rotation.y=state.yaw;state.camera.rotation.x=state.pitch;
+  const speed=crouch?1.55:sprint?5.15:3.05;const delta=window.HODSoloCore.movementDelta(state.yaw,f,s,speed*dt);const moved=window.HODSoloCore.resolveMove(state.localPos,delta,(x,z)=>isPlayerClear(x,z,.34),.10);state.localPos.x=moved.x;state.localPos.z=moved.z;
+  state.camera.position.x=state.localPos.x;state.camera.position.z=state.localPos.z;const targetHeight=crouch?1.05:1.68;state.camera.position.y=THREE.MathUtils.damp(state.camera.position.y,targetHeight,12,dt);state.camera.rotation.order='YXZ';state.camera.rotation.y=state.yaw;state.camera.rotation.x=state.pitch;
   if(moving&&Date.now()-state.lastStep>(sprint?280:crouch?650:430)){state.lastStep=Date.now();footstep();}
   if(moving)state.viewModel.position.y=-.34+Math.sin(Date.now()*.012)*(sprint?.025:.012);else state.viewModel.position.y=THREE.MathUtils.damp(state.viewModel.position.y,-.34,6,dt);
   if(state.mode==='multi'&&Date.now()-state.lastSync>90){state.lastSync=Date.now();socket.emit('move',{x:state.localPos.x,z:state.localPos.z,running:state.running,crouched:state.crouched,hidden:false});}
