@@ -13,11 +13,11 @@ const { spawn } = require('node:child_process');
     }
     assert.ok(ready,'Express server did not become healthy');
     browser=await chromium.launch({headless:true,args:['--no-sandbox','--use-gl=swiftshader','--enable-webgl','--ignore-gpu-blocklist']});
-    const page=await browser.newPage({viewport:{width:1440,height:900}});
+    const page=await browser.newPage({viewport:{width:1440,height:900}});page.setDefaultTimeout(15000);
     const errors=[];page.on('pageerror',e=>errors.push(e.message));
     await page.goto('http://127.0.0.1:4173/?e2e=1',{waitUntil:'domcontentloaded'});
     await page.locator('#soloButton').click();
-    await page.waitForFunction(()=>window.__HOD_E2E__?.snapshot().screen==='game',{timeout:20000});
+    await page.waitForFunction(()=>window.__HOD_E2E__?.snapshot().screen==='game',null,{timeout:20000});
     const initial=await page.evaluate(()=>window.__HOD_E2E__.snapshot());
     assert.equal(initial.mode,'solo','Solo mode should start');
     assert.equal(initial.objectives.length,3,'A solo run should have three objectives');
@@ -55,10 +55,10 @@ const { spawn } = require('node:child_process');
 
     // Verify extraction interaction, death screen, and replay reset.
     await page.evaluate(()=>{const s=window.__HOD_E2E__.snapshot();window.__HOD_E2E__.setPosition(18,12);window.__HOD_E2E__.interact();});
-    await page.waitForFunction(()=>document.querySelector('#endScreen').style.display==='grid',{timeout:5000});
+    await page.waitForFunction(()=>document.querySelector('#endScreen').style.display==='grid',null,{timeout:5000});
     assert.match(await page.locator('#endTitle').innerText(),/EXTRACTION SUCCESSFUL/);
     await page.locator('#replayButton').click();
-    await page.waitForFunction(()=>window.__HOD_E2E__.snapshot().screen==='game');
+    await page.waitForFunction(()=>window.__HOD_E2E__.snapshot().screen==='game',null,{timeout:10000});
     assert.equal((await page.evaluate(()=>window.__HOD_E2E__.snapshot())).found,0,'Replay should reset objective count');
 
     await page.evaluate(()=>window.__HOD_E2E__.forceDeath());
