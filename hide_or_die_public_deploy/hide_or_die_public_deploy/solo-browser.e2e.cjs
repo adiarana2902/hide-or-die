@@ -24,10 +24,25 @@ const { spawn } = require('node:child_process');
 
     // Actual keyboard movement, not a simulated state write.
     await page.locator('#gameCanvas').click({force:true});
+    // Pick a genuinely open stretch with room for at least 1.2 units of forward travel.
+    const movementStart=await page.evaluate(()=>{
+      const api=window.__HOD_E2E__;
+      for(let radius=0;radius<=8;radius+=.5){
+        for(let dx=-radius;dx<=radius;dx+=.5) for(let dz=-radius;dz<=radius;dz+=.5){
+          const x=-6+dx,z=2.5+dz;
+          if(api.clearAt(x,z)&&api.clearAt(x,z-.8))return{x,z};
+        }
+      }
+      return null;
+    });
+    assert.ok(movementStart,'Could not find a clear test position for forward movement');
+    await page.evaluate(({x,z})=>window.__HOD_E2E__.setPosition(x,z),movementStart);
     const before=await page.evaluate(()=>window.__HOD_E2E__.snapshot().position);
-    await page.keyboard.down('w');await page.waitForTimeout(650);await page.keyboard.up('w');
+    await page.keyboard.down('w');
+    await page.waitForTimeout(650);
     const after=await page.evaluate(()=>window.__HOD_E2E__.snapshot().position);
-    assert.ok(after.z<before.z-0.2,'W should move forward at the default camera heading');
+    await page.keyboard.up('w');
+    assert.ok(after.z<before.z-0.2,`W should move forward: before=${JSON.stringify(before)} after=${JSON.stringify(after)}`);
 
     // Room centres intentionally contain desks, beds, machinery and other props.
     // Find at least one collision-free player position in each room instead of
