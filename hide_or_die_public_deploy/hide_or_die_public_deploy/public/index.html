@@ -411,6 +411,8 @@ socket.on('disconnect',()=>{if(state.screen==='game'&&state.mode==='multi')showT
 
 window.addEventListener('keydown',event=>{state.keys[event.code]=true;if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(event.code))event.preventDefault();if(event.repeat)return;if(event.code==='KeyE')interact();if(event.code==='KeyF'&&state.screen==='game')toggleFlashlight();if(event.code==='KeyH'&&state.screen==='game')toggleHide();if(event.code==='Escape'&&state.screen==='game'&&state.hidden)toggleHide();});
 window.addEventListener('keyup',event=>{state.keys[event.code]=false;});
+window.addEventListener('blur',()=>{state.keys={};state.running=false;});
+document.addEventListener('visibilitychange',()=>{if(document.hidden){state.keys={};state.running=false;}});
 
 </script>
 </body>
