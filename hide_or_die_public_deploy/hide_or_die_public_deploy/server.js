@@ -4,7 +4,7 @@ const http=require('http');
 const path=require('path');
 const crypto=require('crypto');
 const {Server}=require('socket.io');
-const {isWalkable}=require('./game-logic');
+const {isWalkable,GRID_X,GRID_Z}=require('./game-logic');
 
 const app=express();
 const httpServer=http.createServer(app);
@@ -86,7 +86,7 @@ io.on('connection',s=>{
   const r=rooms.get(s.data.room),p=r&&r.players.get(s.id);if(!r||!r.started||!p||!p.alive||p.escaped)return;
   const x=Number(v&&v.x),z=Number(v&&v.z);if(!isWalkable(x,z))return;
   const now=Date.now(),dt=Math.max(.04,Math.min(.5,(now-s.data.lastMove)/1000));if(dist(p,{x,z})>8.5*dt+.85)return;
-  s.data.lastMove=now;p.x=x;p.z=z;p.running=!!(v&&v.running);p.hidden=!!(v&&v.hidden);
+  s.data.lastMove=now;p.x=x;p.z=z;p.running=!!(v&&v.running);p.hidden=!!(v&&v.hidden)&&HIDE_SPOTS.some(spot=>dist(p,spot)<1.55);
   s.to(r.code).emit('playerMoved',{id:s.id,x,z,running:p.running,hidden:p.hidden});
  });
  s.on('interactObjective',v=>{

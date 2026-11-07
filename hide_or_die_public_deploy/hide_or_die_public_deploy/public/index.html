@@ -144,6 +144,7 @@ function addWallWithDoor(parent,x1,z1,x2,z2,door,mat){
   const dx=x2-x1,dz=z2-z1,length=Math.hypot(dx,dz),doorW=2.75,side=(length-doorW)/2;
   if(Math.abs(dz)<.01){addWall(parent,x1,z1,x1+side,z2,mat);addWall(parent,x2-side,z1,x2,z2,mat);}
   else{addWall(parent,x1,z1,x2,z1+side,mat);addWall(parent,x1,z2-side,x2,z2,mat);}
+  if(!door){addWall(parent,x1,z1,x2,z2,mat);return;}
   if(door){
     if(Math.abs(dz)<.01){addBox(parent,doorW,.22,.24,(x1+x2)/2,3.53,z1,material(0x353c40,.6,.3));}
     else{addBox(parent,.24,.22,doorW,x1,3.53,(z1+z2)/2,material(0x353c40,.6,.3));}
@@ -241,7 +242,7 @@ function updateWorld(world){
 }
 function startWorld(mode,world,players,scenario){
   init3D();state.mode=mode;state.world=world;state.hidden=false;state.dead=false;state.stamina=100;state.battery=100;state.flashlightOn=true;state.localRun=mode==='solo'?{scenario,found:0,enemy:{x:6,z:12},startedAt:Date.now(),lastScare:Date.now()+16000}:null;
-  const self=(players||[]).find(player=>player.id===socket.id);state.localPos=self?{x:self.x,z:self.z}:{x:-18,z:-12};state.yaw=0;state.pitch=0;state.keys={};state.monster.visible=true;state.monster.position.set(world.monster.x,0,world.monster.z);state.monsterTarget={x:world.monster.x,z:world.monster.z,state:'patrol'};state.lastScare=0;state.lastSync=0;
+  const self=(players||[]).find(player=>player.id===socket.id);state.localPos=self?{x:self.x,z:self.z}:{x:-18,z:-12};state.yaw=Math.PI/2;state.pitch=0;state.keys={};state.monster.visible=true;state.monster.position.set(world.monster.x,0,world.monster.z);state.monsterTarget={x:world.monster.x,z:world.monster.z,state:'patrol'};state.lastScare=0;state.lastSync=0;
   clearObjectiveMeshes();world.objectives.forEach((item,index)=>{if(!item.collected)createObjectiveMesh(item,index);});
   state.remotePlayers.clear();for(const player of (players||[])){if(player.id!==socket.id)addRemotePlayer(player);}
   state.camera.position.set(state.localPos.x,1.68,state.localPos.z);state.camera.rotation.order='YXZ';state.camera.rotation.set(0,0,0);state.camera.rotation.y=state.yaw;
