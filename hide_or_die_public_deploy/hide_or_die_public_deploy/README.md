@@ -7,10 +7,11 @@ HIDE OR DIE is a browser-based first-person survival-horror prototype built with
 - First-person 3D camera with mouse look, WASD movement, sprinting, crouching and pointer-lock controls.
 - Procedurally assembled 12-room research facility: Cafeteria, Security, Med Bay, Offices, Storage, Central Hub, Laboratory, Isolation, Loading Bay, Generator, Reactor and Emergency Exit.
 - Flashlight with a draining battery, visible first-person arms/flashlight, minimap, stamina, mission timer and interaction prompts.
-- Locker hiding spots. Hidden operators are ignored by the monster's target selection until they leave the locker.
+- Locker hiding spots. Hidden operators are ignored by the monster's target selection until they leave the locker; the server validates that hiding occurs near a locker.
+- Grid-based monster pathfinding keeps AI inside connected rooms and corridors. Co-op monster senses distinguish running noise, line of sight and quieter crouching; the monster searches a last-known position before returning to patrol.
 - Three power-cell objectives and an emergency extraction objective.
 - Multiplayer private room codes for 2–10 players. Host-controlled start, shared player positions, shared objectives and a server-simulated monster that patrols, investigates noise/running and chases visible survivors.
-- Solo incidents with changing incident narrative, clue labels, collectible positions and an escalating local monster.
+- Solo incidents with changing incident narrative, clue labels, collectible positions, corridor-aware local monster pathfinding and an escalating threat.
 - Procedural ambient drone, footsteps, interaction tones, threat stingers and jump-scare audio using Web Audio.
 - No player voice chat. The game does not request microphone permission or access the microphone.
 - `/healthz` endpoint for service health checks.
@@ -39,7 +40,7 @@ npm start
 
 Open `http://localhost:3000` in a modern desktop browser with WebGL enabled.
 
-Run the small geometry test suite with:
+Run the geometry and monster-path regression test suite with:
 
 ```bash
 npm test

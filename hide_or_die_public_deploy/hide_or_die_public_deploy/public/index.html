@@ -96,6 +96,9 @@ const state = {
 function randomFrom(list){return list[Math.floor(Math.random()*list.length)];}
 function shuffled(list){const a=[...list];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
 function distance(a,b){return Math.hypot(a.x-b.x,a.z-b.z);}
+function nearestRoom(point){let best=null,bestDistance=Infinity;for(let ix=0;ix<GRID_X.length;ix++)for(let iz=0;iz<GRID_Z.length;iz++){const d=Math.hypot(point.x-GRID_X[ix],point.z-GRID_Z[iz]);if(d<bestDistance){best={ix,iz,x:GRID_X[ix],z:GRID_Z[iz]};bestDistance=d;}}return best;}
+function roomPath(from,to){const start=nearestRoom(from),goal=nearestRoom(to),key=n=>n.ix+','+n.iz,startKey=key(start),goalKey=key(goal),queue=[start],previous=new Map([[startKey,null]]);for(let i=0;i<queue.length;i++){const c=queue[i],ck=key(c);if(ck===goalKey)break;for(const [ix,iz] of [[c.ix-1,c.iz],[c.ix+1,c.iz],[c.ix,c.iz-1],[c.ix,c.iz+1]]){if(ix<0||ix>=GRID_X.length||iz<0||iz>=GRID_Z.length)continue;const n={ix,iz,x:GRID_X[ix],z:GRID_Z[iz]},nk=key(n);if(previous.has(nk))continue;previous.set(nk,ck);queue.push(n);}}const path=[];let cursor=goalKey;if(!previous.has(goalKey))return[start];while(cursor){const [ix,iz]=cursor.split(',').map(Number);path.push({ix,iz,x:GRID_X[ix],z:GRID_Z[iz]});cursor=previous.get(cursor);}return path.reverse();}
+function moveOnFacility(from,to,step){if(!isWalkable(to.x,to.z))return from;const path=roomPath(from,to),start=path[0],sameRoom=path.length===1,waypoint=sameRoom?to:(distance(from,start)>.4?start:path[1]),dx=waypoint.x-from.x,dz=waypoint.z-from.z,d=Math.hypot(dx,dz);if(d<=step&&isWalkable(waypoint.x,waypoint.z))return{x:waypoint.x,z:waypoint.z};const amount=Math.min(step,d);if(sameRoom){const scale=amount/(d||1),x=from.x+dx*scale,z=from.z+dz*scale;if(isWalkable(x,z))return{x,z};}const candidates=Math.abs(dx)>=Math.abs(dz)?[{x:from.x+Math.sign(dx)*Math.min(amount,Math.abs(dx)),z:from.z},{x:from.x,z:from.z+Math.sign(dz)*Math.min(amount,Math.abs(dz))}]:[{x:from.x,z:from.z+Math.sign(dz)*Math.min(amount,Math.abs(dz))},{x:from.x+Math.sign(dx)*Math.min(amount,Math.abs(dx)),z:from.z}];return candidates.find(p=>isWalkable(p.x,p.z))||from;}
 function isWalkable(x,z){
   if(!Number.isFinite(x)||!Number.isFinite(z)||Math.abs(x)>23||Math.abs(z)>17)return false;
   const inRoom=GRID_X.some(cx=>GRID_Z.some(cz=>Math.abs(x-cx)<=ROOM_HALF&&Math.abs(z-cz)<=ROOM_HALF));
@@ -215,8 +218,8 @@ function buildMonster(){
   const head=new THREE.Mesh(new THREE.SphereGeometry(.39,12,10),flesh);head.position.set(0,2.28,-.03);head.scale.set(.82,1.25,.9);root.add(head);
   const jaw=new THREE.Mesh(new THREE.BoxGeometry(.36,.18,.28),wound);jaw.position.set(0,2.05,-.24);root.add(jaw);
   for(const x of [-.15,.15]){const e=new THREE.Mesh(new THREE.SphereGeometry(.065,8,8),eye);e.position.set(x,2.32,-.36);root.add(e);}
-  for(const side of [-1,1]){const arm=new THREE.Mesh(new THREE.CapsuleGeometry(.13,.9,4,7),flesh);arm.position.set(side*.56,1.35,-.02);arm.rotation.z=side*-.25;root.add(arm);const claw=new THREE.Mesh(new THREE.ConeGeometry(.12,.45,6),wound);claw.position.set(side*.67,.72,-.1);claw.rotation.z=Math.PI;root.add(claw);}
-  const legMat=material(0x0d1012,.98,.02);for(const side of [-1,1]){const leg=new THREE.Mesh(new THREE.CapsuleGeometry(.16,.62,4,7),legMat);leg.position.set(side*.22,.47,.02);root.add(leg);}
+  const arms=[];for(const side of [-1,1]){const arm=new THREE.Mesh(new THREE.CapsuleGeometry(.13,.9,4,7),flesh);arm.position.set(side*.56,1.35,-.02);arm.rotation.z=side*-.25;root.add(arm);arms.push(arm);const claw=new THREE.Mesh(new THREE.ConeGeometry(.12,.45,6),wound);claw.position.set(side*.67,.72,-.1);claw.rotation.z=Math.PI;root.add(claw);}
+  const legMat=material(0x0d1012,.98,.02),legs=[];for(const side of [-1,1]){const leg=new THREE.Mesh(new THREE.CapsuleGeometry(.16,.62,4,7),legMat);leg.position.set(side*.22,.47,.02);root.add(leg);legs.push(leg);}root.userData.parts={torso,head,arms,legs};
   const aura=new THREE.PointLight(0xc11928,1.2,6,2);aura.position.set(0,1.8,0);root.add(aura);
   root.visible=false;
 }
@@ -244,7 +247,7 @@ function startWorld(mode,world,players,scenario){
   init3D();state.mode=mode;state.world=world;state.hidden=false;state.dead=false;state.stamina=100;state.battery=100;state.flashlightOn=true;state.localRun=mode==='solo'?{scenario,found:0,enemy:{x:6,z:12},startedAt:Date.now(),lastScare:Date.now()+16000}:null;
   const self=(players||[]).find(player=>player.id===socket.id);state.localPos=self?{x:self.x,z:self.z}:{x:-18,z:-12};state.yaw=Math.PI/2;state.pitch=0;state.keys={};state.monster.visible=true;state.monster.position.set(world.monster.x,0,world.monster.z);state.monsterTarget={x:world.monster.x,z:world.monster.z,state:'patrol'};state.lastScare=0;state.lastSync=0;
   clearObjectiveMeshes();world.objectives.forEach((item,index)=>{if(!item.collected)createObjectiveMesh(item,index);});
-  state.remotePlayers.clear();for(const player of (players||[])){if(player.id!==socket.id)addRemotePlayer(player);}
+  for(const mesh of state.remotePlayers.values())state.scene.remove(mesh);state.remotePlayers.clear();for(const player of (players||[])){if(player.id!==socket.id)addRemotePlayer(player);}
   state.camera.position.set(state.localPos.x,1.68,state.localPos.z);state.camera.rotation.order='YXZ';state.camera.rotation.set(0,0,0);state.camera.rotation.y=state.yaw;
   $('operatorLabel').textContent=mode==='solo'?'SOLO OPERATOR':'CO-OP OPERATOR';$('threatLabel').textContent=mode==='solo'?(scenario?.threat||'PATROLLING'):'PATROLLING';if(scenario)$('objectiveTitle').textContent=scenario.title;$('interactionHint').style.display='none';$('hiddenOverlay').style.display='none';$('endScreen').style.display='none';$('scareOverlay').classList.remove('show');$('batteryFill').style.width='100%';$('staminaFill').style.width='100%';
   updateWorld(world);setScreen('game');startAudio();$('gameCanvas').requestPointerLock?.();showToast(scenario?scenario.intro:'TEAM LINK ESTABLISHED — RESTORE POWER AND EXTRACT',4300);
@@ -261,7 +264,7 @@ function startSolo(){
   const world={objectives,exit:{x:18,z:12},monster:{x:6,z:12,state:'patrol'},timeLeft:360,exitUnlocked:false};startWorld('solo',world,[],scenario);
 }
 function interact(){
-  if(state.screen!=='game'||state.hidden)return;
+  if(state.screen!=='game'||state.hidden||state.dead)return;
   const p=state.localPos;let best=null,bestDistance=2.6;
   for(const item of (state.world?.objectives||[])){if(item.collected)continue;const d=distance(p,item);if(d<bestDistance){best=item;bestDistance=d;}}
   if(best){if(state.mode==='multi')socket.emit('interactObjective',{id:best.id});else{best.collected=true;if(state.localRun)state.localRun.found++;updateWorld(state.world);playTone(520,.16,'sine',.07);showToast(best.label+' RECOVERED',2900);if(state.localRun?.found===3)showToast('ALL CELLS RECOVERED — REACH THE EMERGENCY EXIT',4300);}return;}
@@ -270,13 +273,14 @@ function interact(){
   if(locker){toggleHide();return;}
   showToast('NOTHING WITHIN REACH',1200);
 }
-function toggleHide(){const near=state.hideSpots.some(spot=>distance(state.localPos,spot)<1.55);if(!state.hidden&&!near){showToast('FIND A LOCKER BEFORE HIDING',1300);return;}state.hidden=!state.hidden;$('hiddenOverlay').style.display=state.hidden?'grid':'none';$('interactionHint').style.display='none';if(state.mode==='multi')socket.emit('move',{...state.localPos,running:false,hidden:state.hidden});if(state.hidden){document.exitPointerLock?.();showToast('HIDDEN — STAY QUIET',1400);}else{$('gameCanvas').requestPointerLock?.();showToast('BACK INTO THE CORRIDOR',1400);}}
+function toggleHide(){if(state.dead)return;const near=state.hideSpots.some(spot=>distance(state.localPos,spot)<1.55);if(!state.hidden&&!near){showToast('FIND A LOCKER BEFORE HIDING',1300);return;}state.hidden=!state.hidden;$('hiddenOverlay').style.display=state.hidden?'grid':'none';$('interactionHint').style.display='none';if(state.mode==='multi')socket.emit('move',{...state.localPos,running:false,crouched:state.crouched,hidden:state.hidden});if(state.hidden){document.exitPointerLock?.();showToast('HIDDEN — STAY QUIET',1400);}else{$('gameCanvas').requestPointerLock?.();showToast('BACK INTO THE CORRIDOR',1400);}}
 function toggleFlashlight(){if(state.battery<=0){showToast('FLASHLIGHT BATTERY EMPTY');return;}state.flashlightOn=!state.flashlightOn;state.flashlight.intensity=state.flashlightOn&&state.battery>0?42:0;state.torchLens.material.emissiveIntensity=state.flashlightOn?1.4:.1;showToast(state.flashlightOn?'FLASHLIGHT ON':'FLASHLIGHT OFF',900);playTone(state.flashlightOn?620:260,.06,'square',.025);}
 function playTone(freq,duration=.12,type='sine',volume=.04){if(!state.audio)return;const ctx=state.audio.ctx;const osc=ctx.createOscillator(),gain=ctx.createGain();osc.type=type;osc.frequency.value=freq;gain.gain.setValueAtTime(volume,ctx.currentTime);gain.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+duration);osc.connect(gain);gain.connect(state.audio.master);osc.start();osc.stop(ctx.currentTime+duration+.02);}
 function startAudio(){
   if(state.audio){state.audio.ctx.resume?.();return;}
   try{const AudioCtx=window.AudioContext||window.webkitAudioContext;if(!AudioCtx)return;const ctx=new AudioCtx(),master=ctx.createGain();master.gain.value=.4;master.connect(ctx.destination);const osc=ctx.createOscillator(),gain=ctx.createGain(),filter=ctx.createBiquadFilter();osc.type='triangle';osc.frequency.value=43;filter.type='lowpass';filter.frequency.value=115;gain.gain.value=.065;osc.connect(filter);filter.connect(gain);gain.connect(master);osc.start();state.audio={ctx,master,osc,gain};}catch{state.audio=null;}
 }
+function monsterBreath(intensity=1){if(!state.audio)return;const ctx=state.audio.ctx,osc=ctx.createOscillator(),filter=ctx.createBiquadFilter(),gain=ctx.createGain();osc.type='sawtooth';osc.frequency.setValueAtTime(76+Math.random()*13,ctx.currentTime);osc.frequency.exponentialRampToValueAtTime(37,ctx.currentTime+.62);filter.type='lowpass';filter.frequency.value=175;gain.gain.setValueAtTime(.0001,ctx.currentTime);gain.gain.exponentialRampToValueAtTime(.055*intensity,ctx.currentTime+.12);gain.gain.exponentialRampToValueAtTime(.0001,ctx.currentTime+.78);osc.connect(filter);filter.connect(gain);gain.connect(state.audio.master);osc.start();osc.stop(ctx.currentTime+.8);}
 function footstep(){if(!state.audio)return;const ctx=state.audio.ctx;const osc=ctx.createOscillator(),gain=ctx.createGain();osc.type='triangle';osc.frequency.setValueAtTime(75+Math.random()*25,ctx.currentTime);osc.frequency.exponentialRampToValueAtTime(34,ctx.currentTime+.12);gain.gain.setValueAtTime(.055,ctx.currentTime);gain.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+.14);osc.connect(gain);gain.connect(state.audio.master);osc.start();osc.stop(ctx.currentTime+.15);}
 function jumpscare(){if(Date.now()-state.lastScare<2600)return;state.lastScare=Date.now();$('scareOverlay').classList.add('show');playTone(58,.48,'sawtooth',.2);setTimeout(()=>$('scareOverlay').classList.remove('show'),390);}
 function drawMiniMap(){
@@ -284,27 +288,26 @@ function drawMiniMap(){
   for(const r of ROOMS){c.fillStyle=r.type==='reactor'?'#382128':'#283239';c.fillRect(mapX(r.x-4.5),mapY(r.z-4.5),rw,rh);c.strokeStyle='#84949a';c.lineWidth=1.2;c.strokeRect(mapX(r.x-4.5),mapY(r.z-4.5),rw,rh);}
   for(const item of state.world?.objectives||[]){if(item.collected)continue;c.fillStyle='#d7a34d';c.beginPath();c.arc(mapX(item.x),mapY(item.z),3.5,0,Math.PI*2);c.fill();}
   const exit=state.world?.exit;if(exit){c.fillStyle=state.world.exitUnlocked?'#6ee3a8':'#87323a';c.fillRect(mapX(exit.x)-3,mapY(exit.z)-3,6,6);}
-  if(state.world?.monster){c.fillStyle='#f33245';c.beginPath();c.arc(mapX(state.world.monster.x),mapY(state.world.monster.z),4,0,Math.PI*2);c.fill();}
   c.fillStyle='#fff';c.beginPath();c.arc(mapX(state.localPos.x),mapY(state.localPos.z),4,0,Math.PI*2);c.fill();
 }
-function finishSolo(won){if(state.screen!=='game')return;document.exitPointerLock?.();$('endTitle').textContent=won?'EXTRACTION':'CONTAINMENT FAILED';$('endText').textContent=won?(state.localRun?.scenario.ending||'You made it out of Blackridge. The facility is still transmitting.'):'The specimen reached you before the exit could cycle. Every new incident changes the power-cell locations and threat behaviour.';$('endScreen').style.display='grid';state.screen='ended';}
+function finishSolo(won){if(state.screen!=='game')return;state.dead=true;state.keys={};document.exitPointerLock?.();$('endTitle').textContent=won?'EXTRACTION':'CONTAINMENT FAILED';$('endText').textContent=won?(state.localRun?.scenario.ending||'You made it out of Blackridge. The facility is still transmitting.'):'The specimen reached you before the exit could cycle. Every new incident changes the power-cell locations and threat behaviour.';$('endScreen').style.display='grid';state.screen='ended';}
 function updateSolo(dt){
   const run=state.localRun;if(!run)return;
   const patrol=[{x:6,z:12},{x:-6,z:12},{x:-18,z:12},{x:-18,z:0},{x:-6,z:0},{x:6,z:0},{x:18,z:0},{x:18,z:-12},{x:6,z:-12}];
-  const enemy=run.enemy;const playerDistance=distance(enemy,state.localPos);const target=run.found>0?state.localPos:patrol[run.patrolIndex||0];const d=distance(enemy,target);const speed=run.found>0?(d<6?3.0:1.9):1.05;const step=speed*dt/(d||1);enemy.x+=(target.x-enemy.x)*Math.min(1,step);enemy.z+=(target.z-enemy.z)*Math.min(1,step);if(run.found===0&&d<.8)run.patrolIndex=((run.patrolIndex||0)+1)%patrol.length;state.monster.position.set(enemy.x,Math.sin(Date.now()*.006)*.035,enemy.z);state.monsterTarget={...enemy,state:run.found>0?'chase':'patrol'};if(run.found>0&&playerDistance<1.45){finishSolo(false);return;}if(run.found>0&&playerDistance<6&&Date.now()-state.lastScare>5000)jumpscare();
+  const enemy=run.enemy;const playerDistance=distance(enemy,state.localPos);const target=run.found>0?state.localPos:patrol[run.patrolIndex||0];const d=distance(enemy,target);const speed=run.found>0?(d<6?3.0:1.9):1.05;const next=moveOnFacility(enemy,target,speed*dt);enemy.x=next.x;enemy.z=next.z;if(run.found===0&&d<.8)run.patrolIndex=((run.patrolIndex||0)+1)%patrol.length;state.monster.position.set(enemy.x,Math.sin(Date.now()*.006)*.035,enemy.z);state.monsterTarget={...enemy,state:run.found>0?'chase':'patrol'};if(run.found>0&&playerDistance<1.45){finishSolo(false);return;}if(run.found>0&&playerDistance<6&&Date.now()-state.lastScare>5000)jumpscare();
   if(Date.now()>run.lastScare){run.lastScare=Date.now()+17000+Math.random()*12000;if(run.found>0){jumpscare();}else if(Math.random()<.35){playTone(125,.3,'triangle',.035);}}
-  state.world.timeLeft=Math.max(0,360-Math.floor((Date.now()-run.startedAt)/1000));if(state.world.timeLeft<=0)finishSolo(false);
+  state.world.timeLeft=Math.max(0,360-Math.floor((Date.now()-run.startedAt)/1000));const time=state.world.timeLeft;$('timerLabel').textContent=String(Math.floor(time/60)).padStart(2,'0')+':'+String(time%60).padStart(2,'0');if(time<=0)finishSolo(false);
 }
 function updateMovement(dt){
   if(state.hidden||state.dead)return;
-  const keys=state.keys;const f=(keys.KeyW||keys.ArrowUp?1:0)-(keys.KeyS||keys.ArrowDown?1:0);const s=(keys.KeyD||keys.ArrowRight?1:0)-(keys.KeyA||keys.ArrowLeft?1:0);const moving=!!(f||s);const sprint=moving&&(keys.ShiftLeft||keys.ShiftRight)&&state.stamina>1;const crouch=keys.ControlLeft||keys.ControlRight;state.running=!!sprint;
+  const keys=state.keys;const f=(keys.KeyW||keys.ArrowUp?1:0)-(keys.KeyS||keys.ArrowDown?1:0);const s=(keys.KeyD||keys.ArrowRight?1:0)-(keys.KeyA||keys.ArrowLeft?1:0);const moving=!!(f||s);const sprint=moving&&(keys.ShiftLeft||keys.ShiftRight)&&state.stamina>1;const crouch=keys.ControlLeft||keys.ControlRight;state.running=!!sprint;state.crouched=!!crouch;
   if(sprint)state.stamina=Math.max(0,state.stamina-29*dt);else state.stamina=Math.min(100,state.stamina+18*dt);
   const speed=crouch?1.55:sprint?5.15:3.05;const forward=new THREE.Vector3(Math.sin(state.yaw),0,-Math.cos(state.yaw));const right=new THREE.Vector3(Math.cos(state.yaw),0,Math.sin(state.yaw));const dir=forward.multiplyScalar(f).add(right.multiplyScalar(s));if(dir.lengthSq()>0)dir.normalize().multiplyScalar(speed*dt);
   const nx=state.localPos.x+dir.x,nz=state.localPos.z+dir.z;if(isWalkable(nx,state.localPos.z))state.localPos.x=nx;if(isWalkable(state.localPos.x,nz))state.localPos.z=nz;
   state.camera.position.x=state.localPos.x;state.camera.position.z=state.localPos.z;const targetHeight=crouch?1.05:1.68;state.camera.position.y=THREE.MathUtils.damp(state.camera.position.y,targetHeight,12,dt);state.camera.rotation.order='YXZ';state.camera.rotation.y=state.yaw;state.camera.rotation.x=state.pitch;
   if(moving&&Date.now()-state.lastStep>(sprint?280:crouch?650:430)){state.lastStep=Date.now();footstep();}
   if(moving)state.viewModel.position.y=-.34+Math.sin(Date.now()*.012)*(sprint?.025:.012);else state.viewModel.position.y=THREE.MathUtils.damp(state.viewModel.position.y,-.34,6,dt);
-  if(state.mode==='multi'&&Date.now()-state.lastSync>90){state.lastSync=Date.now();socket.emit('move',{x:state.localPos.x,z:state.localPos.z,running:state.running,hidden:false});}
+  if(state.mode==='multi'&&Date.now()-state.lastSync>90){state.lastSync=Date.now();socket.emit('move',{x:state.localPos.x,z:state.localPos.z,running:state.running,crouched:state.crouched,hidden:false});}
   $('staminaFill').style.width=state.stamina+'%';
 }
 function updateMonster(dt){
@@ -319,7 +322,8 @@ function animate(){
   for(const [id,mesh] of state.objectiveMeshes){mesh.position.y=.8+Math.sin(Date.now()*.003+id.length)*.09;mesh.rotation.y+=dt*.55;}
   if(state.flashlightOn&&state.battery>0){state.battery=Math.max(0,state.battery-dt*.12);state.flashlight.intensity=42*(state.battery/100);$('batteryFill').style.width=state.battery+'%';if(state.battery===0){state.flashlight.intensity=0;state.flashlightOn=false;showToast('FLASHLIGHT BATTERY EMPTY',1800);}}
   const nearObj=(state.world?.objectives||[]).some(item=>!item.collected&&distance(state.localPos,item)<2.6);const nearExit=state.world?.exit&&distance(state.localPos,state.world.exit)<3.1;const nearLocker=state.hideSpots.some(spot=>distance(state.localPos,spot)<1.55);$('interactionHint').style.display=(nearObj||nearExit||nearLocker)&&!state.hidden?'block':'none';$('interactionHint').textContent=nearObj?'[ E ] RECOVER POWER CELL':nearExit?'[ E ] USE EXTRACTION PANEL':'[ H ] HIDE IN LOCKER';
-  const enemyDistance=state.monster.visible?distance(state.localPos,{x:state.monster.position.x,z:state.monster.position.z}):99;if(enemyDistance<7&&Date.now()-state.lastThreatTone>3000){state.lastThreatTone=Date.now();playTone(48,.35,'sine',.08);if(enemyDistance<4.5)jumpscare();}
+  const enemyDistance=state.monster.visible?distance(state.localPos,{x:state.monster.position.x,z:state.monster.position.z}):99;if(enemyDistance<10&&Date.now()-state.lastThreatTone>3200){state.lastThreatTone=Date.now();playTone(48,.35,'sine',.08);if(enemyDistance<8)monsterBreath(Math.max(.35,1-enemyDistance/13));if(enemyDistance<4.5)jumpscare();}
+  if(state.monster.visible&&state.monster.userData.parts){const phase=Date.now()*.007,gait=state.monsterTarget?.state==='chase'?1.8:.65,parts=state.monster.userData.parts;parts.arms.forEach((arm,i)=>arm.rotation.x=Math.sin(phase*gait+i*Math.PI)*.32);parts.legs.forEach((leg,i)=>leg.rotation.x=Math.sin(phase*gait+i*Math.PI)*.2);parts.torso.rotation.z=Math.sin(phase*.45)*.035;parts.head.rotation.x=Math.sin(phase*.32)*.045;}
   drawMiniMap();state.renderer.render(state.scene,state.camera);
 }
 
@@ -346,8 +350,8 @@ socket.on('playerMoved',data=>{const p=state.remotePlayers.get(data.id);if(p)p.u
 socket.on('gameUpdate',data=>{updateWorld(data.world);updateRemotePlayers(data.players);});
 socket.on('objectiveCollected',data=>{updateWorld(data.world);showToast(`${data.label} RECOVERED BY ${data.by.toUpperCase()}`,2500);playTone(600,.18,'sine',.07);});
 socket.on('playerCaught',data=>{showToast(`${data.name.toUpperCase()} WAS TAKEN`,2500);if(data.id===socket.id){state.dead=true;$('operatorLabel').textContent='LOST';jumpscare();showToast('YOU HAVE BEEN TAKEN — WAIT FOR YOUR TEAM',4000);}});
-socket.on('playerEscaped',data=>showToast(`${data.name.toUpperCase()} REACHED EXTRACTION`,2000));
-socket.on('roundEnd',data=>{document.exitPointerLock?.();$('endTitle').textContent=data.won?'TEAM EXTRACTED':'FACILITY LOST';$('endText').textContent=data.message+'. Return to the lobby to start another run.';$('endScreen').style.display='grid';state.screen='ended';});
+socket.on('playerEscaped',data=>{showToast(`${data.name.toUpperCase()} REACHED EXTRACTION`,2000);if(data.id===socket.id){state.dead=true;state.keys={};state.hidden=false;$('operatorLabel').textContent='EXTRACTED';$('interactionHint').style.display='none';}});
+socket.on('roundEnd',data=>{document.exitPointerLock?.();$('endTitle').textContent=data.won?'TEAM EXTRACTED':'FACILITY LOST';$('endText').textContent=data.message+'. Return to the lobby to start another run.';state.dead=true;state.keys={};$('endScreen').style.display='grid';state.screen='ended';});
 socket.on('backLobby',data=>{state.room=data;setScreen('lobby');});
 socket.on('disconnect',()=>{if(state.screen==='game'&&state.mode==='multi')showToast('NETWORK LOST — CO-OP CONNECTION INTERRUPTED',5000);});
 

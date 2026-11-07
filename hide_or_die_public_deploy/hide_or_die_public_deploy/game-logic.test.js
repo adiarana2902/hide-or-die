@@ -1,7 +1,10 @@
 'use strict';
 const test=require('node:test');
 const assert=require('node:assert/strict');
-const {GRID_X,GRID_Z,isWalkable}=require('./game-logic');
+const {GRID_X,GRID_Z,isWalkable,roomPath,stepToward}=require('./game-logic');
 test('all 12 facility rooms are walkable',()=>{assert.equal(GRID_X.length*GRID_Z.length,12);for(const x of GRID_X)for(const z of GRID_Z)assert.equal(isWalkable(x,z),true);});
-test('horizontal and vertical corridors connect rooms',()=>{for(const z of GRID_Z)for(let i=0;i<GRID_X.length-1;i++)assert.equal(isWalkable((GRID_X[i]+GRID_X[i+1])/2,z),true);for(const x of GRID_X)for(let i=0;i<GRID_Z.length-1;i++)assert.equal(isWalkable(x,(GRID_Z[i]+GRID_Z[i+1])/2),true);});
+test('horizontal and vertical corridors connect adjacent rooms',()=>{for(const z of GRID_Z)for(let i=0;i<GRID_X.length-1;i++)assert.equal(isWalkable((GRID_X[i]+GRID_X[i+1])/2,z),true);for(const x of GRID_X)for(let i=0;i<GRID_Z.length-1;i++)assert.equal(isWalkable(x,(GRID_Z[i]+GRID_Z[i+1])/2),true);});
 test('invalid areas are rejected',()=>{assert.equal(isWalkable(-12,-8.5),false);assert.equal(isWalkable(30,0),false);assert.equal(isWalkable(0,30),false);assert.equal(isWalkable(NaN,0),false);});
+test('room path uses connected room centres',()=>{const path=roomPath({x:-18,z:-12},{x:18,z:12});assert.deepEqual(path[0],{ix:0,iz:0,x:-18,z:-12});assert.deepEqual(path.at(-1),{ix:3,iz:2,x:18,z:12});for(let i=1;i<path.length;i++)assert.equal(Math.abs(path[i].ix-path[i-1].ix)+Math.abs(path[i].iz-path[i-1].iz),1);});
+test('monster pathing remains walkable and reaches every room',()=>{for(const sx of GRID_X)for(const sz of GRID_Z)for(const tx of GRID_X)for(const tz of GRID_Z){let p={x:sx,z:sz},target={x:tx+1.25,z:tz-1.1};for(let step=0;step<1200&&Math.hypot(p.x-target.x,p.z-target.z)>.08;step++){const next=stepToward(p,target,.28);assert.equal(isWalkable(next.x,next.z),true);p=next;}assert.ok(Math.hypot(p.x-target.x,p.z-target.z)<.08,`failed route ${sx},${sz} -> ${target.x},${target.z}: ended ${p.x},${p.z}`);}});
+test('invalid movement requests cannot move an actor',()=>{const p={x:-18,z:-12};assert.deepEqual(stepToward(p,{x:80,z:12},1),p);assert.deepEqual(stepToward(p,{x:-12,z:-8.5},1),p);});
