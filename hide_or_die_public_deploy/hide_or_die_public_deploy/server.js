@@ -22,14 +22,14 @@ const HIDE_SPOTS=GRID_X.flatMap(x=>GRID_Z.flatMap(z=>[
 
 app.get('/healthz',(_req,res)=>res.json({ok:true,game:'HIDE OR DIE',rooms:rooms.size,uptime:Math.round(process.uptime())}));
 app.use('/vendor/three',express.static(path.join(__dirname,'node_modules','three','build'),{maxAge:'1d',fallthrough:false}));
-app.use(express.static(path.join(__dirname,'public'),{etag:true,maxAge:'1h'}));
+app.use(express.static(path.join(__dirname,'public'),{etag:true,maxAge:'1h',setHeaders:(res,filePath)=>{if(filePath.endsWith('index.html'))res.setHeader('Cache-Control','no-store');}}));
 
 function nameOf(v){return String(v||'Player').replace(/[<>]/g,'').trim().slice(0,16)||'Player';}
 function codeOf(){return crypto.randomBytes(4).toString('hex').slice(0,6).toUpperCase();}
 function avatarOf(v){const a=v&&typeof v==='object'?v:{};const color=(x,d)=>/^#[0-9a-f]{6}$/i.test(String(x||''))?String(x):d;return{skin:color(a.skin,'#c6865b'),hair:color(a.hair,'#24201e'),outfit:color(a.outfit,'#334c63'),pants:color(a.pants,'#22252b'),hairStyle:['short','long','spiky','shaved'].includes(a.hairStyle)?a.hairStyle:'short',outfitStyle:['hoodie','jacket','coat'].includes(a.outfitStyle)?a.outfitStyle:'hoodie',accessory:['none','mask','cap'].includes(a.accessory)?a.accessory:'none'};}
 function dist(a,b){return Math.hypot(a.x-b.x,a.z-b.z);}
 function shuffled(a){const out=[...a];for(let i=out.length-1;i>0;i--){const j=crypto.randomInt(i+1);[out[i],out[j]]=[out[j],out[i]];}return out;}
-function newGame(){return{objectives:shuffled(OBJECTIVES).slice(0,3).map((p,i)=>({id:'cell-'+(i+1),label:'POWER CELL '+(i+1),x:p.x,z:p.z,collected:false})),exit:{...EXIT},monster:{x:6,z:12,state:'patrol'},patrol:0,lastKnown:null,searchUntil:0,startedAt:Date.now(),lastTick:Date.now(),timeLeft:ROUND_SECONDS,escaped:[]};}
+function newGame(){const now=Date.now();return{objectives:shuffled(OBJECTIVES).slice(0,3).map((p,i)=>({id:'cell-'+(i+1),label:'POWER CELL '+(i+1),x:p.x,z:p.z,collected:false})),exit:{...EXIT},monster:{x:18,z:-12,state:'patrol'},patrol:7,lastKnown:null,searchUntil:0,huntStartsAt:now+20000,startedAt:now,lastTick:now,timeLeft:ROUND_SECONDS,escaped:[]};}
 function roomView(r){return{code:r.code,host:r.host,started:r.started,players:[...r.players.values()].map(p=>({id:p.id,name:p.name,avatar:p.avatar,alive:p.alive,escaped:p.escaped}))};}
 function worldView(r){const g=r.game;if(!g)return null;return{objectives:g.objectives.map(o=>({...o})),exit:g.exit,monster:g.monster,timeLeft:g.timeLeft,escaped:g.escaped.length,alive:[...r.players.values()].filter(p=>p.alive&&!p.escaped).length,exitUnlocked:g.objectives.every(o=>o.collected)};}
 function sendWorld(r){io.to(r.code).emit('gameUpdate',{world:worldView(r),players:[...r.players.values()].map(p=>({id:p.id,x:p.x,z:p.z,name:p.name,avatar:p.avatar,alive:p.alive,escaped:p.escaped,hidden:p.hidden}))});}
@@ -47,22 +47,22 @@ function tick(){
   if(g.timeLeft<=0){endRound(r,false,'TIME EXPIRED — THE FACILITY SEALED');continue;}
   const survivors=[...r.players.values()].filter(p=>p.alive&&!p.escaped);
   if(!survivors.length){const saved=[...r.players.values()].some(p=>p.alive&&p.escaped);endRound(r,saved,saved?'SURVIVOR REACHED EXTRACTION':'THE MONSTER FOUND EVERYONE');continue;}
-  const visible=survivors.filter(p=>!p.hidden);
+  const visible=survivors.filter(p=>!p.hidden),hunting=now>=g.huntStartsAt;
   let target=null,nearest=Infinity,targetWasHeard=false;
   for(const p of visible){
-   const d=dist(g.monster,p),heard=!!p.running&&d<24,seen=d<(p.crouched?7:14)&&hasLineOfSight(g.monster,p);
+   const d=dist(g.monster,p),heard=hunting&&!!p.running&&d<18,seen=hunting&&d<(p.crouched?4.5:8.5)&&hasLineOfSight(g.monster,p);
    if((heard||seen)&&d<nearest){target=p;nearest=d;targetWasHeard=heard&&!seen;}
   }
   if(target){
-   g.monster.state=nearest<5?'chase':targetWasHeard?'investigate':'stalk';
-   g.lastKnown={x:target.x,z:target.z};g.searchUntil=now+(targetWasHeard?4200:2800);
-   g.monster=moveToward(g.monster,g.lastKnown,(g.monster.state==='chase'?2.75:1.7)*dt);
+   g.monster.state=nearest<4?'chase':targetWasHeard?'investigate':'stalk';
+   g.lastKnown={x:target.x,z:target.z};g.searchUntil=now+(targetWasHeard?5000:3800);
+   g.monster=moveToward(g.monster,g.lastKnown,(g.monster.state==='chase'?2.25:1.35)*dt);
   }else if(g.lastKnown&&now<g.searchUntil){
-   g.monster.state='search';g.monster=moveToward(g.monster,g.lastKnown,1.15*dt);
+   g.monster.state='search';g.monster=moveToward(g.monster,g.lastKnown,1.0*dt);
   }else{
-   g.lastKnown=null;g.monster.state='patrol';const waypoint=PATROL[g.patrol%PATROL.length];if(dist(g.monster,waypoint)<.9)g.patrol++;g.monster=moveToward(g.monster,PATROL[g.patrol%PATROL.length],1.05*dt);
+   g.lastKnown=null;g.monster.state='patrol';const waypoint=PATROL[g.patrol%PATROL.length];if(dist(g.monster,waypoint)<.9)g.patrol++;g.monster=moveToward(g.monster,PATROL[g.patrol%PATROL.length],.9*dt);
   }
-  for(const p of visible){if(dist(g.monster,p)<1.35&&hasLineOfSight(g.monster,p)){p.alive=false;p.hidden=false;io.to(r.code).emit('playerCaught',{id:p.id,name:p.name});}}
+  for(const p of visible){if(hunting&&dist(g.monster,p)<1.2&&hasLineOfSight(g.monster,p)){p.alive=false;p.hidden=false;io.to(r.code).emit('playerCaught',{id:p.id,name:p.name});}}
   const living=[...r.players.values()].filter(p=>p.alive);
   if(living.length&&living.every(p=>p.escaped)){endRound(r,true,'THE TEAM REACHED EXTRACTION');continue;}
   sendWorld(r);
@@ -92,7 +92,6 @@ io.on('connection',s=>{
   const r=rooms.get(s.data.room);if(!r)return s.emit('errorMsg','CREATE OR JOIN A ROOM FIRST');
   if(r.host!==s.id)return s.emit('errorMsg','ONLY THE ROOM HOST CAN START');
   if(r.started)return s.emit('errorMsg','THIS MATCH IS ALREADY RUNNING');
-  if(r.players.size<2)return s.emit('errorMsg','INVITE AT LEAST ONE FRIEND TO START CO-OP');
   r.started=true;r.ended=false;r.game=newGame();let i=0;
   for(const p of r.players.values()){p.x=-8.2+(i%5)*.82;p.z=1.3+Math.floor(i/5)*1.0;p.alive=true;p.escaped=false;p.hidden=false;p.running=false;p.crouched=false;i++;}
   io.to(r.code).emit('matchStart',{world:worldView(r),players:[...r.players.values()].map(p=>({id:p.id,x:p.x,z:p.z,name:p.name,avatar:p.avatar,alive:true}))});
@@ -107,6 +106,7 @@ io.on('connection',s=>{
  s.on('interactObjective',v=>{
   const r=rooms.get(s.data.room),p=r&&r.players.get(s.id);if(!r||!r.started||!p||!p.alive||p.escaped)return;
   const o=r.game.objectives.find(o=>o.id===String(v&&v.id));if(!o||o.collected||dist(p,o)>2.6)return;o.collected=true;
+  if(Date.now()>=r.game.huntStartsAt){r.game.lastKnown={x:p.x,z:p.z};r.game.searchUntil=Date.now()+3200;}
   io.to(r.code).emit('objectiveCollected',{id:o.id,label:o.label,by:p.name,world:worldView(r)});
  });
  s.on('interactExit',()=>{

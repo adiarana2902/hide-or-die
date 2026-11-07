@@ -45,10 +45,6 @@ test('Socket.IO private room, host rules, co-op start and server validation',asy
  assert.match(room.code,/^[A-F0-9]{6}$/);
  assert.equal(room.players.length,1);
 
- const soloStartError=nextEvent(host,'errorMsg');
- host.emit('startMatch');
- assert.match(await soloStartError,/at least one friend/i);
-
  const friend=io(url,{transports:['websocket'],reconnection:false});sockets.push(friend);
  await nextEvent(friend,'connect');
  const roomChanged=nextEvent(host,'roomUpdate');
@@ -83,6 +79,19 @@ test('Socket.IO private room, host rules, co-op start and server validation',asy
  host.emit('interactExit');
  const exitUpdate=await worldAfterDeniedExit;
  assert.equal(exitUpdate.world.escaped,0,'server must reject extraction when the player is not at the exit');
+});
+
+
+test('a host can launch a private room alone as a practice match',async t=>{
+ const port=await freePort(),url='http://127.0.0.1:'+port;
+ const child=spawn(process.execPath,[path.join(__dirname,'server.js')],{cwd:__dirname,env:{...process.env,PORT:String(port)},stdio:'ignore'}),sockets=[];
+ t.after(()=>{for(const socket of sockets)socket.close();child.kill('SIGTERM');});
+ await waitForServer(url,child);
+ const host=io(url,{transports:['websocket'],reconnection:false});sockets.push(host);await nextEvent(host,'connect');
+ const created=nextEvent(host,'roomUpdate');host.emit('createRoom',{name:'Solo Practice'});const room=await created;
+ assert.equal(room.players.length,1);
+ const started=nextEvent(host,'matchStart');host.emit('startMatch');const match=await started;
+ assert.equal(match.players.length,1);assert.equal(match.world.objectives.length,3);assert.ok(match.world.monster);
 });
 
 test('room host migrates when the current host disconnects',async t=>{
