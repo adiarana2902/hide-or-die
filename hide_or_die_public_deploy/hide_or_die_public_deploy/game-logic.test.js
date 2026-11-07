@@ -43,7 +43,7 @@ test('movement uses camera-relative WASD and swept collision helpers',()=>{
  const start=html.indexOf('function updateMovement(dt){'),end=html.indexOf('\nfunction updateMonster',start),movement=html.slice(start,end);
  assert.match(movement,/HODSoloCore\.movementDelta\(state\.yaw,f,s,speed\*dt\)/);
  assert.match(movement,/HODSoloCore\.resolveMove\(state\.localPos,delta/);
- assert.match(html,/state\.yaw=0/);
+ assert.match(html,/state\.yaw=mode==='solo'\?0:Math\.PI\/2/);
  const {movementDelta}=require('./solo-core');
  const forward=movementDelta(0,1,0,1),back=movementDelta(0,-1,0,1),right=movementDelta(0,0,1,1),left=movementDelta(0,0,-1,1);
  assert.ok(Math.abs(forward.x)<1e-9&&forward.z===-1);assert.ok(Math.abs(back.x)<1e-9&&back.z===1);
@@ -54,7 +54,7 @@ test('movement uses camera-relative WASD and swept collision helpers',()=>{
 
 test('solo starts at a clear spawn and selects reachable objective points',()=>{
  const fs=require('node:fs'),path=require('node:path'),html=fs.readFileSync(path.join(__dirname,'public','index.html'),'utf8');
- assert.match(html,/state\.localPos=self\?\{x:self\.x,z:self\.z\}:\{x:-6,z:2\.5\}/);
+ assert.match(html,/state\.localPos=self\?\{x:self\.x,z:self\.z\}:\(mode==='solo'\?\{x:-6,z:2\.5\}:\{x:-8\.2,z:1\.3\}\)/);
  assert.match(html,/chooseObjectives\(OBJECTIVE_SPOTS/);
  assert.match(html,/nearestClearPoint\(\{x:18,z:-12\}/);
 });
@@ -86,7 +86,7 @@ test('Solo monster spawn and patrol waypoints can be resolved to clear floor',()
 test('Solo end screen cleanly leaves gameplay and extraction hint explains remaining cells',()=>{
  const fs=require('node:fs'),path=require('node:path'),html=fs.readFileSync(path.join(__dirname,'public','index.html'),'utf8');
  assert.match(html,/setScreen\('ended'\);\$\('endScreen'\)\.style\.display='grid'/);
- assert.match(html,/EXTRACTION LOCKED · '\+cellsLeft\+ ' CELL\(S\) LEFT/);
+ assert.match(html,/EXTRACTION LOCKED · '\+cellsLeft\+' CELL\(S\) LEFT/);
  assert.match(html,/nearbyObjective\.label/);
 });
 
