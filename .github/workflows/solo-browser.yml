@@ -6,6 +6,9 @@ on:
     branches: [main]
 permissions:
   contents: read
+concurrency:
+  group: solo-browser-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   solo-browser:
     runs-on: ubuntu-latest
