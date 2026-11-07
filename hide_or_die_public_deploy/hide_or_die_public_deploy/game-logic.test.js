@@ -116,3 +116,11 @@ test('Solo pause freezes monster simulation and player movement',()=>{
  const fs=require('node:fs'),path=require('node:path'),html=fs.readFileSync(path.join(__dirname,'public','index.html'),'utf8');
  assert.match(html,/if\(!run\|\|state\.paused\)return/);assert.match(html,/if\(state\.hidden\|\|state\.dead\|\|state\.paused\)return/);
 });
+
+test('Solo incidents have distinct monster behaviour and a working generator breaker',()=>{
+ const fs=require('node:fs'),path=require('node:path'),html=fs.readFileSync(path.join(__dirname,'public','index.html'),'utf8');
+ for(const value of ['hearing:1.25','vision:1.35','search:1.5','pace:1.25'])assert.ok(html.includes(value),'incident AI profile '+value+' should exist');
+ assert.match(html,/const noise=run\.lastNoise,heard=!!noise&&now-run\.lastNoiseAt<1900&&distance\(enemy,noise\)<noise\.radius\*ai\.hearing/);
+ assert.match(html,/function toggleFacilityBreaker\(\)/);assert.match(html,/AUXILIARY POWER RESTORED/);assert.match(html,/state\.environmentLights\.push\(lamp\)/);
+ assert.match(html,/distance\(p,\{x:-9\.15,z:11\.35\}\)<2\.0/);
+});
