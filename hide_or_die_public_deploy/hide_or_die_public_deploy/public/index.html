@@ -304,7 +304,7 @@ function interact(){
   if(state.screen!=='game'||state.hidden||state.dead)return;
   const p=state.localPos;let best=null,bestDistance=2.6;
   for(const item of (state.world?.objectives||[])){if(item.collected)continue;const d=distance(p,item);if(d<bestDistance){best=item;bestDistance=d;}}
-  if(best){if(state.mode==='multi')socket.emit('interactObjective',{id:best.id});else{best.collected=true;if(state.localRun){state.localRun.found++;state.localRun.noiseUntil=Date.now()+4200;state.localRun.lastKnown={x:state.localPos.x,z:state.localPos.z};}updateWorld(state.world);playTone(520,.16,'sine',.07);showToast(best.label+' RECOVERED',2900);if(state.localRun?.found===3)showToast('ALL CELLS RECOVERED — REACH THE EMERGENCY EXIT',4300);}return;}
+  if(best){if(state.mode==='multi')socket.emit('interactObjective',{id:best.id});else{best.collected=true;if(state.localRun){const noiseAt=Date.now();state.localRun.found++;state.localRun.noiseUntil=noiseAt+4200;state.localRun.lastKnown={x:state.localPos.x,z:state.localPos.z};state.localRun.searchUntil=noiseAt+4200;}updateWorld(state.world);playTone(520,.16,'sine',.07);showToast(best.label+' RECOVERED',2900);if(state.localRun?.found===3)showToast('ALL CELLS RECOVERED — REACH THE EMERGENCY EXIT',4300);}return;}
   const exit=state.world?.exit;if(exit&&distance(p,exit)<3.1){if(!(state.world.objectives||[]).every(item=>item.collected)){showToast('EXTRACTION LOCKED — RECOVER ALL THREE POWER CELLS');return;}if(state.mode==='multi')socket.emit('interactExit');else finishSolo(true);return;}
   const locker=state.hideSpots.reduce((best,spot)=>{const d=distance(p,spot);return d<1.55&&(!best||d<best.d)?{spot,d}:best;},null);
   if(locker){toggleHide();return;}

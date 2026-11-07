@@ -21,3 +21,9 @@ test('server supports one-player private practice and gives the monster an openi
  const fs=require('node:fs'),path=require('node:path'),server=fs.readFileSync(path.join(__dirname,'server.js'),'utf8');
  assert.doesNotMatch(server,/players\.size<2/);assert.match(server,/huntStartsAt:now\+20000/);assert.match(server,/d<\(p\.crouched\?4\.5:8\.5\)/);
 });
+
+test('solo power-cell collection triggers a timed investigation clue',()=>{
+ const fs=require('node:fs'),path=require('node:path'),html=fs.readFileSync(path.join(__dirname,'public','index.html'),'utf8');
+ assert.match(html,/noiseAt\+4200/);
+ assert.match(html,/searchUntil=noiseAt\+4200/);
+});
