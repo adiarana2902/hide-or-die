@@ -103,18 +103,17 @@ const { spawn } = require('node:child_process');
     // Find at least one collision-free player position in each room instead of
     // incorrectly requiring its prop-filled geometric centre to be empty.
     const map=await page.evaluate(()=>window.__HOD_E2E__.snapshot());
-    const blocked=[];
-    for(const room of map.rooms){
-      let open=false;
-      for(let x=room.x-4;x<=room.x+4&&!open;x+=.5){
-        for(let z=room.z-4;z<=room.z+4;z+=.5){
-          if(await page.evaluate(([a,b])=>window.__HOD_E2E__.clearAt(a,b),[x,z])){open=true;break;}
-        }
+    const blocked=await page.evaluate(()=>{
+      const api=window.__HOD_E2E__,snapshot=api.snapshot(),bad=[];
+      for(const room of snapshot.rooms){
+        let open=false;
+        for(let x=room.x-4;x<=room.x+4&&!open;x+=.5)for(let z=room.z-4;z<=room.z+4;z+=.5)if(api.clearAt(x,z)){open=true;break;}
+        if(!open)bad.push(room.name);
       }
-      if(!open)blocked.push(room.name);
-    }
-    for(const x of [-18,-6,6,18]) for(const z of [-6,6]) if(!await page.evaluate(([a,b])=>window.__HOD_E2E__.clearAt(a,b),[x,z])) blocked.push('corridor '+x+','+z);
-    for(const z of [-12,0,12]) for(const x of [-12,0,12]) if(!await page.evaluate(([a,b])=>window.__HOD_E2E__.clearAt(a,b),[x,z])) blocked.push('corridor '+x+','+z);
+      for(const x of [-18,-6,6,18])for(const z of [-6,6])if(!api.clearAt(x,z))bad.push('corridor '+x+','+z);
+      for(const z of [-12,0,12])for(const x of [-12,0,12])if(!api.clearAt(x,z))bad.push('corridor '+x+','+z);
+      return bad;
+    });
     assert.deepEqual(blocked,[],'Every room should have a collision-free player position and every corridor centre should be traversable');
 
     // Collect all three objectives using the same interaction function as the E key.
