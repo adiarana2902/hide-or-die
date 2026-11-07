@@ -213,7 +213,7 @@ function buildFacility(){
   state.scene.userData.staticFacility=floorGroup;
 }
 function addRoomProps(room,parent){
-  const darkMetal=material(0x242b2e,.68,.42),rubber=material(0x111719,.98,.02),wood=material(0x4b4033,.88,.05),screen=material(0x151f24,.4,.25,{emissive:0x071a20,emissiveIntensity:.8});
+  const darkMetal=material(0x242b2e,.68,.42),rubber=material(0x111719,.98,.02),wood=material(0x4b4033,.88,.05),screen=material(0x151f24,.4,.25,{emissive:0x071a20,emissiveIntensity:.8}),trimMat=material(0x6b7475,.65,.3);
   const {x,z}=room;
   const lockers=[{x:x+3.45,z:z+.5},{x:x-3.4,z:z+2.8}];
   for(const p of lockers){addBox(parent,.92,2.5,.9,p.x,1.25,p.z,darkMetal);addBox(parent,.08,2.2,.07,p.x-.28,1.25,p.z-.47,trimMat);addBox(parent,.06,.12,.06,p.x+.28,1.1,p.z-.49,material(0x9b8c69,.4,.6));state.hideSpots.push({x:p.x,z:p.z});}

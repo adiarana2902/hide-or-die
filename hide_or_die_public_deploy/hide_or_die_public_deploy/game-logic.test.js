@@ -27,3 +27,12 @@ test('solo power-cell collection triggers a timed investigation clue',()=>{
  assert.match(html,/noiseAt\+4200/);
  assert.match(html,/searchUntil=noiseAt\+4200/);
 });
+
+test('facility room props define the trim material used by locker details',()=>{
+ const fs=require('node:fs'),path=require('node:path'),html=fs.readFileSync(path.join(__dirname,'public','index.html'),'utf8');
+ const start=html.indexOf('function addRoomProps(room,parent){'),end=html.indexOf('\nfunction ',start+10);
+ assert.ok(start>=0&&end>start);
+ const props=html.slice(start,end);
+ assert.match(props,/trimMat=material\(/);
+ assert.match(props,/addBox\(parent,\.08,2\.2,\.07,[^;]+trimMat\)/);
+});
