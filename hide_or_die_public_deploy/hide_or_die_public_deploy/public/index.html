@@ -339,7 +339,7 @@ function updateSolo(dt){
     if(run.lastKnown&&now<run.searchUntil){target=run.lastKnown;threat=playerDistance<4?'chase':'investigate';speed=threat==='chase'?2.2:1.35;}
   }
   if(!target){target=patrol[run.patrolIndex%patrol.length];if(distance(enemy,target)<.8)run.patrolIndex=(run.patrolIndex+1)%patrol.length;}
-  const heading=Math.atan2(-(target.x-enemy.x),-(target.z-enemy.z));const delta=window.HODSoloCore.movementDelta(heading,1,0,speed*dt);const next=window.HODSoloCore.resolveMove(enemy,delta,(x,z)=>isPlayerClear(x,z,.42),.12);enemy.x=next.x;enemy.z=next.z;
+  const pathStep=moveOnFacility(enemy,target,speed*dt);const delta={x:pathStep.x-enemy.x,z:pathStep.z-enemy.z};const next=window.HODSoloCore.resolveMove(enemy,delta,(x,z)=>isPlayerClear(x,z,.42),.12);enemy.x=next.x;enemy.z=next.z;
   if(run.lastKnown&&now>=run.searchUntil)run.lastKnown=null;
   state.monster.position.set(enemy.x,Math.sin(now*.006)*.035,enemy.z);state.monsterTarget={...enemy,state:threat};$('threatLabel').textContent=threat.toUpperCase();
   const contactDistance=distance(enemy,state.localPos);if(now>=run.graceUntil&&!state.hidden&&contactDistance<1.35&&(threat==='chase'||threat==='investigate')){finishSolo(false,'THE SPECIMEN CAUGHT YOU IN THE FACILITY.');return;}
