@@ -125,7 +125,7 @@ test('server blocks furniture movement, validates locker hiding and uses safe sp
  assert.equal(forwarded,false,'server rejects a move into the locker collision volume');
  const deniedHide=nextEvent(host,'hideState');host.emit('move',{x:-8.2,z:1.3,running:false,crouched:false,hidden:true});
  assert.equal((await deniedHide).hidden,false,'server rejects hiding from outside locker range');
- const approach=nextEvent(friend,'playerMoved');host.emit('move',{x:-9.4,z:1.8,running:false,crouched:false,hidden:false});await approach;
- const hidden=nextEvent(host,'hideState');host.emit('move',{x:-9.4,z:1.8,running:false,crouched:false,hidden:true});
+ const approach=nextEvent(friend,'playerMoved');host.emit('move',{x:-9.0,z:1.75,running:false,crouched:false,hidden:false});await approach;
+ const hidden=nextEvent(host,'hideState');host.emit('move',{x:-9.0,z:1.75,running:false,crouched:false,hidden:true});
  assert.equal((await hidden).hidden,true,'server accepts hiding at a valid collision-free locker approach');
 });
