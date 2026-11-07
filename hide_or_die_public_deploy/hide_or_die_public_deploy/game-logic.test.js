@@ -124,3 +124,8 @@ test('Solo incidents have distinct monster behaviour and a working generator bre
  assert.match(html,/function toggleFacilityBreaker\(\)/);assert.match(html,/AUXILIARY POWER RESTORED/);assert.match(html,/state\.environmentLights\.push\(lamp\)/);
  assert.match(html,/distance\(p,\{x:-9\.15,z:11\.35\}\)<2\.0/);
 });
+
+test('Solo security wing requires a keycard and unlocks its physical doorway',()=>{
+ const fs=require('node:fs'),path=require('node:path'),html=fs.readFileSync(path.join(__dirname,'public','index.html'),'utf8');
+ assert.match(html,/function unlockSecurityDoor\(\)/);assert.match(html,/run\.inventory\.includes\('keycard'\)/);assert.match(html,/run\.doors\.security=true/);assert.match(html,/state\.securityDoor\.position\.y=4\.2/);assert.match(html,/state\.localRun\.doors\?\.security/);
+});
