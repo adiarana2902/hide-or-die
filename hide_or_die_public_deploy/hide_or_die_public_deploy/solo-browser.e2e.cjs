@@ -73,6 +73,10 @@ const { spawn } = require('node:child_process');
 
     // Exercise all four real keyboard directions relative to the camera heading.
     await page.locator('#gameCanvas').click({force:true});
+    // Keep keyboard QA focused on the canvas without pointer-lock mouse deltas
+    // changing the camera yaw while the four movement directions are measured.
+    await page.evaluate(()=>document.exitPointerLock?.());
+    await page.waitForFunction(()=>document.pointerLockElement===null);
     const movementStart=await page.evaluate(()=>{
       const api=window.__HOD_E2E__;
       for(let radius=0;radius<=8;radius+=.5){
@@ -84,7 +88,6 @@ const { spawn } = require('node:child_process');
       return null;
     });
     assert.ok(movementStart,'Could not find open floor for four-direction movement checks');
-    const heading=await page.evaluate(()=>window.__HOD_E2E__.snapshot().yaw);
     const directions=[
       {key:'w',forward:1,side:0,label:'W forward'},
       {key:'s',forward:-1,side:0,label:'S backward'},
@@ -93,17 +96,21 @@ const { spawn } = require('node:child_process');
     ];
     for(const direction of directions){
       await page.evaluate(({x,z})=>window.__HOD_E2E__.setPosition(x,z),movementStart);
-      const before=await page.evaluate(()=>window.__HOD_E2E__.snapshot().position);
+      const beforeState=await page.evaluate(()=>window.__HOD_E2E__.snapshot());
+      const before=beforeState.position;
+      const heading=beforeState.yaw;
       await page.keyboard.down(direction.key);
       await page.waitForTimeout(500);
       const after=await page.evaluate(()=>window.__HOD_E2E__.snapshot().position);
       await page.keyboard.up(direction.key);
+      const afterState=await page.evaluate(()=>window.__HOD_E2E__.snapshot());
       const dx=after.x-before.x,dz=after.z-before.z;
       const fx=-Math.sin(heading),fz=-Math.cos(heading),rx=Math.cos(heading),rz=-Math.sin(heading);
       const expectedX=fx*direction.forward+rx*direction.side;
       const expectedZ=fz*direction.forward+rz*direction.side;
       const distance=Math.hypot(dx,dz);
       const alignment=distance>0?(dx*expectedX+dz*expectedZ)/distance:-1;
+      assert.ok(Math.abs(afterState.yaw-heading)<.01,`${direction.label} camera heading should remain stable during keyboard-only movement`);
       assert.ok(distance>.12&&alignment>.8,`${direction.label} should move in its intended direction; delta=(${dx.toFixed(3)},${dz.toFixed(3)}), heading=${heading.toFixed(3)}, alignment=${alignment.toFixed(2)}`);
     }
     // Room centres intentionally contain desks, beds, machinery and other props.
