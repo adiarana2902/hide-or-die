@@ -22,6 +22,8 @@ const { spawn } = require('node:child_process');
     assert.equal(initial.mode,'solo','Solo mode should start');
     assert.equal(initial.objectives.length,3,'A solo run should have three objectives');
     assert.equal(initial.health,100,'A new incident should start at full health');
+    await page.evaluate(()=>{window.__HOD_E2E__.setPosition(-9.15,11.35);window.__HOD_E2E__.interact();});
+    assert.equal((await page.evaluate(()=>window.__HOD_E2E__.snapshot())).powerOn,true,'Generator breaker should restore facility power');
     const report=initial.pickups.find(p=>p.id==='report');
     const medkit=initial.pickups.find(p=>p.id==='medkit');
     assert.ok(report&&medkit,'Evidence and medical supplies should spawn in the facility');
