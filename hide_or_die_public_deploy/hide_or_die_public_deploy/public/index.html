@@ -313,7 +313,7 @@ function interact(){
   if(locker){toggleHide();return;}
   showToast('NOTHING WITHIN REACH',1200);
 }
-function toggleHide(){if(state.dead)return;const near=state.hideSpots.some(spot=>distance(state.localPos,spot)<1.55);if(!state.hidden&&!near){showToast('FIND A LOCKER BEFORE HIDING',1300);return;}state.hidden=!state.hidden;$('hiddenOverlay').style.display=state.hidden?'grid':'none';$('interactionHint').style.display='none';if(state.mode==='multi')socket.emit('move',{...state.localPos,running:false,crouched:state.crouched,hidden:state.hidden});if(state.hidden){document.exitPointerLock?.();showToast('HIDDEN — STAY QUIET',1400);}else{$('gameCanvas').requestPointerLock?.();showToast('BACK INTO THE CORRIDOR',1400);}}
+function toggleHide(){if(state.dead)return;const near=state.hideSpots.some(spot=>distance(state.localPos,spot)<1.55);if(!state.hidden&&!near){showToast('FIND A LOCKER BEFORE HIDING',1300);return;}state.hidden=!state.hidden;$('hiddenOverlay').style.display=state.hidden?'grid':'none';$('interactionHint').style.display='none';if(state.mode==='multi')socket.emit('move',{...state.localPos,running:false,crouched:state.crouched,hidden:state.hidden});if(state.hidden){if(state.mode==='solo'&&state.localRun){const run=state.localRun,close=distance(run.enemy,state.localPos)<8,visible=close&&window.HODSoloCore.canSeeTarget(run.enemy,state.localPos,(x,z)=>isPlayerClear(x,z,.05));if(visible){run.lastKnown={x:state.localPos.x,z:state.localPos.z};run.searchUntil=Date.now()+10000;}}document.exitPointerLock?.();showToast('HIDDEN — STAY QUIET',1400);}else{$('gameCanvas').requestPointerLock?.();showToast('BACK INTO THE CORRIDOR',1400);}}
 function toggleFlashlight(){if(state.battery<=0){showToast('FLASHLIGHT BATTERY EMPTY');return;}state.flashlightOn=!state.flashlightOn;state.flashlight.intensity=state.flashlightOn&&state.battery>0?42:0;state.torchLens.material.emissiveIntensity=state.flashlightOn?1.4:.1;showToast(state.flashlightOn?'FLASHLIGHT ON':'FLASHLIGHT OFF',900);playTone(state.flashlightOn?620:260,.06,'square',.025);}
 function playTone(freq,duration=.12,type='sine',volume=.04){if(!state.audio)return;const ctx=state.audio.ctx;const osc=ctx.createOscillator(),gain=ctx.createGain();osc.type=type;osc.frequency.value=freq;gain.gain.setValueAtTime(volume,ctx.currentTime);gain.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+duration);osc.connect(gain);gain.connect(state.audio.master);osc.start();osc.stop(ctx.currentTime+duration+.02);}
 function startAudio(){
@@ -335,10 +335,12 @@ function updateSolo(dt){
   const run=state.localRun;if(!run)return;
   const now=Date.now(),patrol=[{x:18,z:-12},{x:6,z:-12},{x:-6,z:-12},{x:-18,z:-12},{x:-18,z:0},{x:-18,z:12},{x:-6,z:12},{x:6,z:12},{x:18,z:12},{x:18,z:0},{x:6,z:0},{x:-6,z:0}].map(point=>nearestClearPoint(point,.42));
   const enemy=run.enemy,playerDistance=distance(enemy,state.localPos);let target=null,threat='patrol',speed=.82;
-  if(now>=run.graceUntil&&!state.hidden){
-    const heard=state.running&&playerDistance<20,seen=playerDistance<(state.crouched?4.2:10)&&window.HODSoloCore.canSeeTarget(enemy,state.localPos,(x,z)=>isPlayerClear(x,z,.05));
-    if(heard||seen){run.lastKnown={x:state.localPos.x,z:state.localPos.z};run.searchUntil=now+4800;}
-    if(run.noiseUntil>now&&!run.lastKnown){run.lastKnown={x:state.localPos.x,z:state.localPos.z};run.searchUntil=run.noiseUntil;}
+  if(now>=run.graceUntil){
+    if(!state.hidden){
+      const heard=state.running&&playerDistance<20,seen=playerDistance<(state.crouched?4.2:10)&&window.HODSoloCore.canSeeTarget(enemy,state.localPos,(x,z)=>isPlayerClear(x,z,.05));
+      if(heard||seen){run.lastKnown={x:state.localPos.x,z:state.localPos.z};run.searchUntil=now+4800;}
+      if(run.noiseUntil>now&&!run.lastKnown){run.lastKnown={x:state.localPos.x,z:state.localPos.z};run.searchUntil=run.noiseUntil;}
+    }
     if(run.lastKnown&&now<run.searchUntil){target=run.lastKnown;threat=playerDistance<4?'chase':'investigate';speed=threat==='chase'?2.2:1.35;}
   }
   if(!target){target=patrol[run.patrolIndex%patrol.length];if(distance(enemy,target)<.8)run.patrolIndex=(run.patrolIndex+1)%patrol.length;}
