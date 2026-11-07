@@ -2,6 +2,7 @@
 const test=require('node:test');
 const assert=require('node:assert/strict');
 const {GRID_X,GRID_Z,isWalkable,isPlayerClear,isPlayerPathClear,roomPath,stepToward}=require('./game-logic');
+const {movementDelta,resolveMove,canSeeTarget,chooseObjectives}=require('./solo-core');
 const SPAWNS=Array.from({length:10},(_,i)=>({x:-8.2+(i%5)*.82,z:1.3+Math.floor(i/5)*1.0}));
 const OBJECTIVES=[{x:-18.5,z:-9},{x:-9,z:-14.6},{x:3,z:-14.6},{x:20.2,z:-15},{x:-18.5,z:-3.1},{x:-3.3,z:-3.3},{x:3.2,z:-3.3},{x:15,z:-3.2},{x:-9.5,z:9},{x:2,z:9},{x:-18.5,z:15}];
 test('all 12 facility rooms are walkable',()=>{assert.equal(GRID_X.length*GRID_Z.length,12);for(const x of GRID_X)for(const z of GRID_Z)assert.equal(isWalkable(x,z),true);});
@@ -67,4 +68,24 @@ test('solo replay resets run state and returns through the shared startup path',
  const fs=require('node:fs'),path=require('node:path'),html=fs.readFileSync(path.join(__dirname,'public','index.html'),'utf8');
  assert.match(html,/function startWorld\(mode,world,players,scenario\)\{\s*init3D\(\);state\.keys=\{\};state\.dead=false/);
  assert.match(html,/replayButton'\)\.onclick=\(\)=>\{if\(state\.mode==='multi'\).*?else startSolo\(\)/s);
+});
+
+test('Solo spawn, exit and all configured power-cell locations are collision-free',()=>{
+ const objectives=[{x:-18.5,z:-9},{x:-9,z:-14.6},{x:3,z:-14.6},{x:20.2,z:-15},{x:-18.5,z:-3.1},{x:-3.3,z:-3.3},{x:3.2,z:-3.3},{x:15,z:-3.2},{x:-9.5,z:9},{x:2,z:9},{x:-18.5,z:15}];
+ assert.equal(isPlayerClear(-6,2.5,.34),true,'Solo spawn must be clear');
+ assert.equal(isPlayerClear(18,12,.34),true,'extraction approach must be clear');
+ for(const point of objectives)assert.equal(isPlayerClear(point.x,point.z,.22),true,'Solo objective must be reachable');
+ const chosen=chooseObjectives(objectives,(x,z)=>isPlayerClear(x,z,.22),{x:-6,z:2.5},3);
+ assert.equal(chosen.length,3,'three reachable objectives must always be selectable');
+});
+test('Solo monster spawn and patrol waypoints can be resolved to clear floor',()=>{
+ const points=[{x:18,z:-12},{x:6,z:-12},{x:-6,z:-12},{x:-18,z:-12},{x:-18,z:0},{x:-18,z:12},{x:-6,z:12},{x:6,z:12},{x:18,z:12},{x:18,z:0},{x:6,z:0},{x:-6,z:0}];
+ function nearestClear(point,radius=.42){if(isPlayerClear(point.x,point.z,radius))return point;for(let ring=1;ring<=12;ring++){const offset=ring*.35;for(let i=-ring;i<=ring;i++)for(const [dx,dz] of [[i*.35,-offset],[i*.35,offset],[-offset,i*.35],[offset,i*.35]])if(isPlayerClear(point.x+dx,point.z+dz,radius))return{x:point.x+dx,z:point.z+dz};}return null;}
+ for(const point of points){const resolved=nearestClear(point);assert.ok(resolved,'patrol point must have a clear nearby floor position');assert.equal(isPlayerClear(resolved.x,resolved.z,.42),true);}
+});
+test('Solo end screen cleanly leaves gameplay and extraction hint explains remaining cells',()=>{
+ const fs=require('node:fs'),path=require('node:path'),html=fs.readFileSync(path.join(__dirname,'public','index.html'),'utf8');
+ assert.match(html,/setScreen\('ended'\);\$\('endScreen'\)\.style\.display='grid'/);
+ assert.match(html,/EXTRACTION LOCKED · '\+cellsLeft\+ ' CELL\(S\) LEFT/);
+ assert.match(html,/nearbyObjective\.label/);
 });
