@@ -366,7 +366,7 @@ function drawMiniMap(){
 }
 function finishSolo(won,cause){if(state.screen!=='game'||state.dead)return;state.dead=true;state.keys={};state.running=false;document.exitPointerLock?.();$('operatorLabel').textContent=won?'EXTRACTED':'LOST';$('endTitle').textContent=won?'EXTRACTION SUCCESSFUL':'CONTAINMENT FAILED';$('endText').textContent=(cause|| (won?(state.localRun?.scenario.ending||'You escaped Blackridge.'):'The specimen caught you before extraction.'))+' · '+(state.localRun?.scenario.title||'SOLO INCIDENT')+' · POWER CELLS '+(state.localRun?.found||0)+'/3';const reveal=()=>{if(state.screen==='game'){setScreen('ended');$('endScreen').style.display='grid';}};if(!won){$('gameCanvas').classList.add('deathHit');jumpscare();setTimeout(()=>{$('gameCanvas').classList.remove('deathHit');reveal();},520);}else reveal();}
 function updateSolo(dt){
-  const run=state.localRun;if(!run)return;
+  const run=state.localRun;if(!run||state.paused)return;
   const now=Date.now(),patrol=[{x:18,z:-12},{x:6,z:-12},{x:-6,z:-12},{x:-18,z:-12},{x:-18,z:0},{x:-18,z:12},{x:-6,z:12},{x:6,z:12},{x:18,z:12},{x:18,z:0},{x:6,z:0},{x:-6,z:0}].map(point=>nearestClearPoint(point,.42));
   const enemy=run.enemy,playerDistance=distance(enemy,state.localPos);let target=null,threat='patrol',speed=.82;
   if(now>=run.graceUntil){
@@ -430,6 +430,8 @@ $('menuButton').onclick=()=>{$('endScreen').style.display='none';if(state.mode==
 $('roomCode').addEventListener('input',()=>{$('roomCode').value=$('roomCode').value.toUpperCase().replace(/[^A-F0-9]/g,'').slice(0,6);});
 $('roomCode').value=new URLSearchParams(location.search).get('room')||'';if($('roomCode').value){$('joinForm').style.display='grid';}
 loadAvatar();bindAvatar();
+for(const [id,key,fallback] of [['volumeSetting','hod-volume','40'],['sensitivitySetting','hod-sensitivity','19'],['shakeSetting','hod-shake','55'],['fovSetting','hod-fov','78']]){const saved=localStorage.getItem(key);$(id).value=saved||fallback;if(id==='sensitivitySetting')state.mouseSensitivity=Number($(id).value)/10000;if(id==='fovSetting'&&state.camera){state.camera.fov=Number($(id).value);state.camera.updateProjectionMatrix();}}
+
 socket.on('connect',()=>{$('connectionStatus').textContent='NETWORK CONNECTED · PRIVATE CHANNEL READY';});
 socket.on('connect_error',()=>{$('connectionStatus').textContent='NETWORK UNAVAILABLE · REFRESH TO RETRY';});
 socket.on('errorMsg',message=>showToast(message));
