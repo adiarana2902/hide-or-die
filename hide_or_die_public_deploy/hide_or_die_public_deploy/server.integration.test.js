@@ -95,7 +95,8 @@ test('room host migrates when the current host disconnects',async t=>{
  const connect=async()=>{const socket=io(url,{transports:['websocket'],reconnection:false});sockets.push(socket);await new Promise((resolve,reject)=>{socket.once('connect',resolve);socket.once('connect_error',reject);});return socket;};
  const host=await connect(),friend=await connect(),third=await connect();
  const created=nextEvent(host,'roomUpdate');host.emit('createRoom',{name:'Host'});const room=await created;
- const joined=nextEvent(host,'roomUpdate');friend.emit('joinRoom',{name:'Friend',code:room.code});await joined;
+ const hostJoined=nextEvent(host,'roomUpdate'),friendJoined=nextEvent(friend,'roomUpdate');friend.emit('joinRoom',{name:'Friend',code:room.code});await Promise.all([hostJoined,friendJoined]);
+ await new Promise(resolve=>setTimeout(resolve,30));
  const migrated=nextEvent(friend,'roomUpdate');host.disconnect();const afterLeave=await migrated;
  assert.equal(afterLeave.host,friend.id);assert.equal(afterLeave.players.length,1);
  const thirdJoined=nextEvent(friend,'roomUpdate');third.emit('joinRoom',{name:'New teammate',code:room.code});const three=await thirdJoined;
