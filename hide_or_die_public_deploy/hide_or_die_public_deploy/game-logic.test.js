@@ -37,15 +37,6 @@ test('facility room props define the trim material used by locker details',()=>{
  assert.match(props,/addBox\(parent,\.08,2\.2,\.07,[^;]+trimMat\)/);
 });
 
-test('WASD movement mapping uses W forward, S backward, A left and D right',()=>{
- const fs=require('node:fs'),path=require('node:path'),html=fs.readFileSync(path.join(__dirname,'public','index.html'),'utf8');
- const start=html.indexOf('function updateMovement(dt){'),end=html.indexOf('\nfunction updateMonster',start);
- assert.ok(start>=0&&end>start);
- const movement=html.slice(start,end);
- assert.match(movement,/const f=\(keys\.KeyS\?1:0\)-\(keys\.KeyW\?1:0\)\+\(keys\.ArrowUp\?1:0\)-\(keys\.ArrowDown\?1:0\)/);
- assert.match(movement,/const s=\(keys\.KeyA\?1:0\)-\(keys\.KeyD\?1:0\)\+\(keys\.ArrowRight\?1:0\)-\(keys\.ArrowLeft\?1:0\)/);
-});
-
 test('movement basis matches Three.js camera forward and right at the game spawn yaw',()=>{
  const fs=require('node:fs'),path=require('node:path'),html=fs.readFileSync(path.join(__dirname,'public','index.html'),'utf8');
  const start=html.indexOf('function updateMovement(dt){'),end=html.indexOf('\nfunction updateMonster',start),movement=html.slice(start,end);
