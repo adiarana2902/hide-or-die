@@ -21,7 +21,7 @@ const HIDE_SPOTS=GRID_X.flatMap(x=>GRID_Z.flatMap(z=>[
 ]));
 
 app.get('/healthz',(_req,res)=>res.json({ok:true,game:'HIDE OR DIE',rooms:rooms.size,uptime:Math.round(process.uptime())}));
-app.use('/vendor/three',express.static(path.join(__dirname,'node_modules','three','build'),{maxAge:'1d',fallthrough:false}));
+app.get('/solo-core.js',(_req,res)=>res.sendFile(path.join(__dirname,'solo-core.js')));\napp.use('/vendor/three',express.static(path.join(__dirname,'node_modules','three','build'),{maxAge:'1d',fallthrough:false}));
 app.use(express.static(path.join(__dirname,'public'),{etag:true,maxAge:'1h',setHeaders:(res,filePath)=>{if(filePath.endsWith('index.html'))res.setHeader('Cache-Control','no-store');}}));
 
 function nameOf(v){return String(v||'Player').replace(/[<>]/g,'').trim().slice(0,16)||'Player';}
