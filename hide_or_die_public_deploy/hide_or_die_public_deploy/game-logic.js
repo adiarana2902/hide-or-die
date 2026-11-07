@@ -39,7 +39,13 @@ function roomPath(from,to){
 function stepToward(from,to,maxStep){
  if(!from||!to||!isWalkable(from.x,from.z)||!isWalkable(to.x,to.z)||!Number.isFinite(maxStep)||maxStep<=0)return from;
  const path=roomPath(from,to),start=path[0],sameRoom=path.length===1;
- const waypoint=sameRoom?to:(Math.hypot(from.x-start.x,from.z-start.z)>.4?start:path[1]);
+ let waypoint=to;
+ if(!sameRoom){
+  const next=path[1];
+  if(start.iz===next.iz&&Math.abs(from.z-start.z)>.08)waypoint={x:from.x,z:start.z};
+  else if(start.ix===next.ix&&Math.abs(from.x-start.x)>.08)waypoint={x:start.x,z:from.z};
+  else waypoint=next;
+ }
  const dx=waypoint.x-from.x,dz=waypoint.z-from.z,distance=Math.hypot(dx,dz);
  if(distance<=maxStep&&isWalkable(waypoint.x,waypoint.z))return {x:waypoint.x,z:waypoint.z};
  const amount=Math.min(maxStep,distance);
