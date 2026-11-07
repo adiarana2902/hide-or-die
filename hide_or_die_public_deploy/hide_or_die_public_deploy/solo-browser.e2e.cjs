@@ -55,6 +55,12 @@ const { spawn } = require('node:child_process');
     await page.evaluate(({x,z})=>window.__HOD_E2E__.setPosition(x,z),medkit);
     await page.evaluate(()=>window.__HOD_E2E__.interact());
     inventoryState=await page.evaluate(()=>window.__HOD_E2E__.snapshot());
+    assert.equal(inventoryState.health,60,'Damage should reduce operator health');
+    assert.ok(inventoryState.inventory.includes('medkit'),'Recovered medkit should enter inventory');
+    await page.keyboard.press('Tab');
+    await page.locator('#inventoryList [data-use="medkit"]').click();
+    await page.keyboard.press('Tab');
+    inventoryState=await page.evaluate(()=>window.__HOD_E2E__.snapshot());
     assert.equal(inventoryState.health,100,'Using a recovered medkit should restore health');
     assert.ok(!inventoryState.inventory.includes('medkit'),'A used medkit should be consumed');
 
