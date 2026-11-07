@@ -25,7 +25,7 @@ const { spawn } = require('node:child_process');
     // Actual keyboard movement, not a simulated state write.
     await page.locator('#gameCanvas').click({force:true});
     const before=await page.evaluate(()=>window.__HOD_E2E__.snapshot().position);
-    await page.keyboard.down('KeyW');await page.waitForTimeout(650);await page.keyboard.up('KeyW');
+    await page.keyboard.down('w');await page.waitForTimeout(650);await page.keyboard.up('w');
     const after=await page.evaluate(()=>window.__HOD_E2E__.snapshot().position);
     assert.ok(after.z<before.z-0.2,'W should move forward at the default camera heading');
 
