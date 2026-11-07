@@ -15,7 +15,7 @@ test('solid furniture and reactor core reject player occupancy',()=>{assert.equa
 test('player path collision blocks crossing through desks and beds',()=>{assert.equal(isPlayerPathClear({x:-9,z:-12.7},{x:-3,z:-12.7}),false);assert.equal(isPlayerPathClear({x:3,z:-12.5},{x:9,z:-12.5}),false);});
 test('locker approach positions are clear and within hiding range',()=>{const locker={x:-9.4,z:2.8},approach={x:-9.4,z:1.8};assert.equal(isPlayerClear(approach.x,approach.z),true);assert.ok(Math.hypot(locker.x-approach.x,locker.z-approach.z)<1.55);});
 test('browser client exposes solo play, visible customization and first-person controls',()=>{const fs=require('node:fs'),path=require('node:path'),html=fs.readFileSync(path.join(__dirname,'public','index.html'),'utf8');assert.match(html,/THREE\.WebGLRenderer/);assert.match(html,/PerspectiveCamera/);assert.match(html,/requestPointerLock/);assert.match(html,/soloButton.*startSolo/s);assert.match(html,/CUSTOMIZE YOUR OPERATOR/);assert.match(html,/id=\"hairStyle\"/);assert.match(html,/id=\"outfitStyle\"/);assert.match(html,/id=\"avatarPreview\"/);assert.match(html,/MOUSE LOOK/);assert.doesNotMatch(html,/getUserMedia|RTCPeerConnection|voiceReady|voiceSignal/);});
-test('server exposes health and gameplay routes',()=>{const fs=require('node:fs'),path=require('node:path'),server=fs.readFileSync(path.join(__dirname,'server.js'),'utf8');assert.match(server,/app\.get\('\/healthz'/);assert.match(server,/\/vendor\/three/);assert.match(server,/interactObjective/);assert.match(server,/interactExit/);});
+test('server exposes health and gameplay routes',()=>{const fs=require('node:fs'),path=require('node:path'),server=fs.readFileSync(path.join(__dirname,'server.js'),'utf8');assert.match(server,/app\.get\('\/healthz'/);assert.match(server,/\/vendor\/three/);assert.match(server,/app\.get\('\/solo-core\.js'/);assert.match(server,/interactObjective/);assert.match(server,/interactExit/);});
 
 test('server supports one-player private practice and gives the monster an opening grace period',()=>{
  const fs=require('node:fs'),path=require('node:path'),server=fs.readFileSync(path.join(__dirname,'server.js'),'utf8');
@@ -49,4 +49,22 @@ test('movement uses camera-relative WASD and swept collision helpers',()=>{
  assert.ok(right.x===1&&Math.abs(right.z)<1e-9);assert.ok(left.x===-1&&Math.abs(left.z)<1e-9);
  const turned=movementDelta(Math.PI/2,1,0,1);
  assert.ok(turned.x<-.99&&Math.abs(turned.z)<1e-9,'W must follow the camera after turning');
+});
+
+test('solo starts at a clear spawn and selects reachable objective points',()=>{
+ const fs=require('node:fs'),path=require('node:path'),html=fs.readFileSync(path.join(__dirname,'public','index.html'),'utf8');
+ assert.match(html,/state\.localPos=self\?\{x:self\.x,z:self\.z\}:\{x:-6,z:2\.5\}/);
+ assert.match(html,/chooseObjectives\(OBJECTIVE_SPOTS/);
+ assert.match(html,/nearestClearPoint\(\{x:18,z:-12\}/);
+});
+test('solo monster uses line of sight, obstacle-aware pathing and locker searches',()=>{
+ const fs=require('node:fs'),path=require('node:path'),html=fs.readFileSync(path.join(__dirname,'public','index.html'),'utf8');
+ assert.match(html,/canSeeTarget\(enemy,state\.localPos/);
+ assert.match(html,/resolveMove\(enemy,delta/);
+ assert.match(html,/state\.hidden&&contactDistance<2\.0/);
+});
+test('solo replay resets run state and returns through the shared startup path',()=>{
+ const fs=require('node:fs'),path=require('node:path'),html=fs.readFileSync(path.join(__dirname,'public','index.html'),'utf8');
+ assert.match(html,/function startWorld\(mode,world,players,scenario\)\{\s*init3D\(\);state\.keys=\{\};state\.dead=false/);
+ assert.match(html,/replayButton'\)\.onclick=\(\)=>\{if\(state\.mode==='multi'\).*?else startSolo\(\)/s);
 });
