@@ -144,13 +144,15 @@ function material(color,roughness=.86,metalness=.05,extra={}){return new THREE.M
 function addBox(parent,w,h,d,x,y,z,mat){const mesh=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat);mesh.position.set(x,y,z);mesh.castShadow=false;mesh.receiveShadow=true;parent.add(mesh);return mesh;}
 function addWall(parent,x1,z1,x2,z2,mat){const dx=x2-x1,dz=z2-z1;const length=Math.hypot(dx,dz);const box=addBox(parent,Math.abs(dx)<.01?.24:length,3.65,Math.abs(dz)<.01?.24:length,(x1+x2)/2,1.82,(z1+z2)/2,mat);return box;}
 function addWallWithDoor(parent,x1,z1,x2,z2,door,mat){
-  const dx=x2-x1,dz=z2-z1,length=Math.hypot(dx,dz),doorW=2.75,side=(length-doorW)/2;
-  if(Math.abs(dz)<.01){addWall(parent,x1,z1,x1+side,z2,mat);addWall(parent,x2-side,z1,x2,z2,mat);}
-  else{addWall(parent,x1,z1,x2,z1+side,mat);addWall(parent,x1,z2-side,x2,z2,mat);}
+  const dx=x2-x1,dz=z2-z1,length=Math.hypot(dx,dz);
   if(!door){addWall(parent,x1,z1,x2,z2,mat);return;}
-  if(door){
-    if(Math.abs(dz)<.01){addBox(parent,doorW,.22,.24,(x1+x2)/2,3.53,z1,material(0x353c40,.6,.3));}
-    else{addBox(parent,.24,.22,doorW,x1,3.53,(z1+z2)/2,material(0x353c40,.6,.3));}
+  const doorW=2.75,side=(length-doorW)/2;
+  if(Math.abs(dz)<.01){
+    addWall(parent,x1,z1,x1+side,z2,mat);addWall(parent,x2-side,z1,x2,z2,mat);
+    addBox(parent,doorW,.22,.24,(x1+x2)/2,3.53,z1,material(0x353c40,.6,.3));
+  }else{
+    addWall(parent,x1,z1,x2,z1+side,mat);addWall(parent,x1,z2-side,x2,z2,mat);
+    addBox(parent,.24,.22,doorW,x1,3.53,(z1+z2)/2,material(0x353c40,.6,.3));
   }
 }
 function makeSign(text){const c=document.createElement('canvas');c.width=512;c.height=128;const g=c.getContext('2d');g.fillStyle='#10171b';g.fillRect(0,0,512,128);g.strokeStyle='#8f2830';g.lineWidth=5;g.strokeRect(5,5,502,118);g.fillStyle='#d9d5c8';g.font='bold 48px monospace';g.textAlign='center';g.textBaseline='middle';g.fillText(text,256,66);const tex=new THREE.CanvasTexture(c);tex.colorSpace=THREE.SRGBColorSpace;return new THREE.MeshBasicMaterial({map:tex});}

@@ -84,3 +84,22 @@ test('Socket.IO private room, host rules, co-op start and server validation',asy
  const exitUpdate=await worldAfterDeniedExit;
  assert.equal(exitUpdate.world.escaped,0,'server must reject extraction when the player is not at the exit');
 });
+
+test('room host migrates when the current host disconnects',async t=>{
+ const {spawn}=require('node:child_process'),net=require('node:net'),path=require('node:path');
+ const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+ const probe=net.createServer();await new Promise(resolve=>probe.listen(0,'127.0.0.1',resolve));const port=probe.address().port;await new Promise(resolve=>probe.close(resolve));
+ const url='http://127.0.0.1:'+port,child=spawn(process.execPath,[path.join(__dirname,'server.js')],{cwd:__dirname,env:{...process.env,PORT:String(port)},stdio:'ignore'}),sockets=[];
+ t.after(()=>{for(const socket of sockets)socket.close();child.kill('SIGTERM');});
+ for(let n=0;n<60;n++){try{const response=await fetch(url+'/healthz');if(response.ok)break;}catch{}await wait(100);}
+ const connect=async()=>{const socket=io(url,{transports:['websocket'],reconnection:false});sockets.push(socket);await new Promise((resolve,reject)=>{socket.once('connect',resolve);socket.once('connect_error',reject);});return socket;};
+ const host=await connect(),friend=await connect(),third=await connect();
+ const created=nextEvent(host,'roomUpdate');host.emit('createRoom',{name:'Host'});const room=await created;
+ const joined=nextEvent(host,'roomUpdate');friend.emit('joinRoom',{name:'Friend',code:room.code});await joined;
+ const migrated=nextEvent(friend,'roomUpdate');host.disconnect();const afterLeave=await migrated;
+ assert.equal(afterLeave.host,friend.id);assert.equal(afterLeave.players.length,1);
+ const thirdJoined=nextEvent(friend,'roomUpdate');third.emit('joinRoom',{name:'New teammate',code:room.code});const three=await thirdJoined;
+ assert.equal(three.players.length,2);
+ const match=nextEvent(friend,'matchStart');friend.emit('startMatch');const started=await match;
+ assert.equal(started.players.length,2,'new host must be able to start a match');
+});
