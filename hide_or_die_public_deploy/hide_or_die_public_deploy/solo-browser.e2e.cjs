@@ -22,28 +22,41 @@ const { spawn } = require('node:child_process');
     assert.equal(initial.mode,'solo','Solo mode should start');
     assert.equal(initial.objectives.length,3,'A solo run should have three objectives');
 
-    // Actual keyboard movement, not a simulated state write.
+    // Exercise all four real keyboard directions relative to the camera heading.
     await page.locator('#gameCanvas').click({force:true});
-    // Pick a genuinely open stretch with room for at least 1.2 units of forward travel.
     const movementStart=await page.evaluate(()=>{
       const api=window.__HOD_E2E__;
       for(let radius=0;radius<=8;radius+=.5){
         for(let dx=-radius;dx<=radius;dx+=.5) for(let dz=-radius;dz<=radius;dz+=.5){
           const x=-6+dx,z=2.5+dz;
-          if(api.clearAt(x,z)&&api.clearAt(x,z-.8))return{x,z};
+          if(api.clearAt(x,z)&&api.clearAt(x+1,z)&&api.clearAt(x-1,z)&&api.clearAt(x,z+1)&&api.clearAt(x,z-1))return{x,z};
         }
       }
       return null;
     });
-    assert.ok(movementStart,'Could not find a clear test position for forward movement');
-    await page.evaluate(({x,z})=>window.__HOD_E2E__.setPosition(x,z),movementStart);
-    const before=await page.evaluate(()=>window.__HOD_E2E__.snapshot().position);
-    await page.keyboard.down('w');
-    await page.waitForTimeout(650);
-    const after=await page.evaluate(()=>window.__HOD_E2E__.snapshot().position);
-    await page.keyboard.up('w');
-    assert.ok(after.z<before.z-0.2,`W should move forward: before=${JSON.stringify(before)} after=${JSON.stringify(after)}`);
-
+    assert.ok(movementStart,'Could not find open floor for four-direction movement checks');
+    const heading=await page.evaluate(()=>window.__HOD_E2E__.snapshot().yaw);
+    const directions=[
+      {key:'w',forward:1,side:0,label:'W forward'},
+      {key:'s',forward:-1,side:0,label:'S backward'},
+      {key:'a',forward:0,side:-1,label:'A left'},
+      {key:'d',forward:0,side:1,label:'D right'}
+    ];
+    for(const direction of directions){
+      await page.evaluate(({x,z})=>window.__HOD_E2E__.setPosition(x,z),movementStart);
+      const before=await page.evaluate(()=>window.__HOD_E2E__.snapshot().position);
+      await page.keyboard.down(direction.key);
+      await page.waitForTimeout(500);
+      const after=await page.evaluate(()=>window.__HOD_E2E__.snapshot().position);
+      await page.keyboard.up(direction.key);
+      const dx=after.x-before.x,dz=after.z-before.z;
+      const fx=-Math.sin(heading),fz=-Math.cos(heading),rx=Math.cos(heading),rz=-Math.sin(heading);
+      const expectedX=fx*direction.forward+rx*direction.side;
+      const expectedZ=fz*direction.forward+rz*direction.side;
+      const distance=Math.hypot(dx,dz);
+      const alignment=distance>0?(dx*expectedX+dz*expectedZ)/distance:-1;
+      assert.ok(distance>.12&&alignment>.8,`${direction.label} should move in its intended direction; delta=(${dx.toFixed(3)},${dz.toFixed(3)}), heading=${heading.toFixed(3)}, alignment=${alignment.toFixed(2)}`);
+    }
     // Room centres intentionally contain desks, beds, machinery and other props.
     // Find at least one collision-free player position in each room instead of
     // incorrectly requiring its prop-filled geometric centre to be empty.
