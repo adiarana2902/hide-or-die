@@ -114,7 +114,7 @@ function isWalkable(x,z){
 }
 const PLAYER_SOLIDS=[],PLAYER_CIRCLES=[];
 function addRoomSolids(x,z,type){
- PLAYER_SOLIDS.push({x:x+3.45,z:z+.5,w:.92,h:.9},{x:x-3.4,z:z+2.8,w:.92,h:.9});
+ PLAYER_SOLIDS.push({x:x+3.45,z:z-2.8,w:.92,h:.9},{x:x-3.4,z:z+2.8,w:.92,h:.9});
  if(['cafeteria','office','security','lab','hub'].includes(type))PLAYER_SOLIDS.push({x:x-.6,z:z-.7,w:2.2,h:1.25});
  if(type==='medical')PLAYER_SOLIDS.push({x:x+.4,z:z-.5,w:2.6,h:1.4});
  if(type==='storage'||type==='loading')for(let i=0;i<3;i++)PLAYER_SOLIDS.push({x:x-2.7+i*1.65,z:z+.8,w:1.1,h:1.1});
@@ -218,7 +218,7 @@ function buildFacility(){
 function addRoomProps(room,parent){
   const darkMetal=material(0x242b2e,.68,.42),rubber=material(0x111719,.98,.02),wood=material(0x4b4033,.88,.05),screen=material(0x151f24,.4,.25,{emissive:0x071a20,emissiveIntensity:.8}),trimMat=material(0x6b7475,.65,.3);
   const {x,z}=room;
-  const lockers=[{x:x+3.45,z:z+.5},{x:x-3.4,z:z+2.8}];
+  const lockers=[{x:x+3.45,z:z-2.8},{x:x-3.4,z:z+2.8}];
   for(const p of lockers){addBox(parent,.92,2.5,.9,p.x,1.25,p.z,darkMetal);addBox(parent,.08,2.2,.07,p.x-.28,1.25,p.z-.47,trimMat);addBox(parent,.06,.12,.06,p.x+.28,1.1,p.z-.49,material(0x9b8c69,.4,.6));state.hideSpots.push({x:p.x,z:p.z});}
   if(['cafeteria','office','security','lab','hub'].includes(room.type)){
     addBox(parent,2.2,.18,1.25,x-.6,.9,z-.7,wood);for(const dx of [-1.45,.25])for(const dz of [-.75,.35])addBox(parent,.12,.9,.12,x+dx,.44,z+dz,darkMetal);
@@ -229,7 +229,7 @@ function addRoomProps(room,parent){
   if(room.type==='generator'){addBox(parent,2.4,2.3,2.1,x+.8,1.15,z+.8,darkMetal);for(let i=0;i<4;i++)addBox(parent,.12,1.7,.14,x-.2+i*.65,1.15,z-.3,material(0x9b3439,.55,.55,{emissive:0x381015,emissiveIntensity:.6}));}
   if(room.type==='reactor'){const core=new THREE.Mesh(new THREE.CylinderGeometry(1.05,1.35,3.1,12),material(0x4d2830,.35,.65,{emissive:0x70131c,emissiveIntensity:1.2}));core.position.set(x,1.55,z);parent.add(core);const ring=new THREE.Mesh(new THREE.TorusGeometry(1.55,.08,8,32),material(0xb84c4f,.3,.8,{emissive:0x6e121a,emissiveIntensity:1.3}));ring.rotation.x=Math.PI/2;ring.position.set(x,1.7,z);parent.add(ring);}
   if(room.type==='isolation'){const pod=addBox(parent,1.5,2.7,1.5,x+1.8,1.35,z-.9,material(0x27383c,.25,.65,{transparent:true,opacity:.72,emissive:0x123037,emissiveIntensity:.55}));addBox(parent,1.7,.12,1.7,x+1.8,.2,z-.9,darkMetal);}
-  if(room.type==='exit'){addBox(parent,3.2,3.2,.45,x,1.6,z-4.2,material(0x343d40,.6,.5));addBox(parent,2.2,.18,.08,x,2.8,z-3.92,material(0x8f202b,.28,.15,{emissive:0x8f101b,emissiveIntensity:2}));}
+  if(room.type==='exit'){addBox(parent,3.2,3.2,.45,x,1.6,z+4.2,material(0x343d40,.6,.5));addBox(parent,2.2,.18,.08,x,2.8,z+3.92,material(0x8f202b,.28,.15,{emissive:0x8f101b,emissiveIntensity:2}));}
 }
 function buildViewModel(){
   const arms=new THREE.Group();arms.position.set(.37,-.34,-.62);state.camera.add(arms);state.viewModel=arms;
