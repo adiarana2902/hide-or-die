@@ -56,3 +56,13 @@ test('WASD and arrow keys map to camera-relative forward, backward, left and rig
  assert.match(movement,/new THREE\.Vector3\(Math\.sin\(state\.yaw\),0,-Math\.cos\(state\.yaw\)\)/);
  assert.match(movement,/new THREE\.Vector3\(Math\.cos\(state\.yaw\),0,Math\.sin\(state\.yaw\)\)/);
 });
+
+test('movement basis matches Three.js camera forward and right at the game spawn yaw',()=>{
+ const fs=require('node:fs'),path=require('node:path'),html=fs.readFileSync(path.join(__dirname,'public','index.html'),'utf8');
+ const start=html.indexOf('function updateMovement(dt){'),end=html.indexOf('\nfunction updateMonster',start),movement=html.slice(start,end);
+ assert.match(movement,/new THREE\.Vector3\(-Math\.sin\(state\.yaw\),0,-Math\.cos\(state\.yaw\)\)/);
+ assert.match(movement,/new THREE\.Vector3\(Math\.cos\(state\.yaw\),0,-Math\.sin\(state\.yaw\)\)/);
+ const yaw=Math.PI/2,forward=[-Math.sin(yaw),-Math.cos(yaw)],right=[Math.cos(yaw),-Math.sin(yaw)];
+ assert.ok(forward[0]<-.99&&Math.abs(forward[1])<1e-9,'W must move in the direction the spawned camera faces');
+ assert.ok(Math.abs(right[0])<1e-9&&right[1]<-.99,'D must move to the spawned camera right');
+});
