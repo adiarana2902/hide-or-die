@@ -1,0 +1,26 @@
+name: Solo regression tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  solo-regression:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: hide_or_die_public_deploy/hide_or_die_public_deploy/package-lock.json
+      - name: Install dependencies
+        working-directory: hide_or_die_public_deploy/hide_or_die_public_deploy
+        run: npm ci
+      - name: Run gameplay regression tests
+        working-directory: hide_or_die_public_deploy/hide_or_die_public_deploy
+        run: npm test
