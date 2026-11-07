@@ -178,7 +178,7 @@ function init3D(){
   state.scene.add(state.camera);
   const hemi=new THREE.HemisphereLight(0x93a8b8,0x17110d,0.34);state.scene.add(hemi);
   const ambient=new THREE.AmbientLight(0x26343d,0.24);state.scene.add(ambient);
-  const fill=new THREE.DirectionalLight(0x5e7185,0.35);fill.position.set(-12,18,4);fill.castShadow=true;fill.shadow.mapSize.set(1024,1024);fill.shadow.camera.near=.5;fill.shadow.camera.far=48;state.scene.add(fill);
+  const fill=new THREE.DirectionalLight(0x5e7185,0.35);fill.position.set(-12,18,4);fill.castShadow=true;fill.shadow.mapSize.set(512,512);fill.shadow.camera.near=.5;fill.shadow.camera.far=48;state.scene.add(fill);
   buildFacility();buildViewModel();buildMonster();
   state.clock=new THREE.Clock();
   window.addEventListener('resize',resize3D);
@@ -189,7 +189,7 @@ function init3D(){
 }
 function resize3D(){if(!state.renderer)return;state.renderer.setSize(innerWidth,innerHeight,false);state.camera.aspect=innerWidth/innerHeight;state.camera.updateProjectionMatrix();}
 function material(color,roughness=.86,metalness=.05,extra={}){return new THREE.MeshStandardMaterial({color,roughness,metalness,...extra});}
-function addBox(parent,w,h,d,x,y,z,mat){const mesh=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat);mesh.position.set(x,y,z);mesh.castShadow=true;mesh.receiveShadow=true;parent.add(mesh);return mesh;}
+function addBox(parent,w,h,d,x,y,z,mat){const mesh=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat);mesh.position.set(x,y,z);mesh.castShadow=h>.5&&h<3.5&&w<4&&d<4;mesh.receiveShadow=true;parent.add(mesh);return mesh;}
 function addWall(parent,x1,z1,x2,z2,mat){const dx=x2-x1,dz=z2-z1;const length=Math.hypot(dx,dz);const box=addBox(parent,Math.abs(dx)<.01?.24:length,3.65,Math.abs(dz)<.01?.24:length,(x1+x2)/2,1.82,(z1+z2)/2,mat);return box;}
 function addWallWithDoor(parent,x1,z1,x2,z2,door,mat){
   const dx=x2-x1,dz=z2-z1,length=Math.hypot(dx,dz);
@@ -271,7 +271,7 @@ function buildMonster(){
   const jaw=new THREE.Mesh(new THREE.BoxGeometry(.36,.18,.28),wound);jaw.position.set(0,2.05,-.24);root.add(jaw);
   for(const x of [-.15,.15]){const e=new THREE.Mesh(new THREE.SphereGeometry(.065,8,8),eye);e.position.set(x,2.32,-.36);root.add(e);}
   const arms=[];for(const side of [-1,1]){const arm=new THREE.Mesh(new THREE.CapsuleGeometry(.13,.9,4,7),flesh);arm.position.set(side*.56,1.35,-.02);arm.rotation.z=side*-.25;root.add(arm);arms.push(arm);const claw=new THREE.Mesh(new THREE.ConeGeometry(.12,.45,6),wound);claw.position.set(side*.67,.72,-.1);claw.rotation.z=Math.PI;root.add(claw);}
-  const legMat=material(0x0d1012,.98,.02),legs=[];for(const side of [-1,1]){const leg=new THREE.Mesh(new THREE.CapsuleGeometry(.16,.62,4,7),legMat);leg.position.set(side*.22,.47,.02);root.add(leg);legs.push(leg);}root.userData.parts={torso,head,arms,legs};
+  const legMat=material(0x0d1012,.98,.02),legs=[];for(const side of [-1,1]){const leg=new THREE.Mesh(new THREE.CapsuleGeometry(.16,.62,4,7),legMat);leg.position.set(side*.22,.47,.02);root.add(leg);legs.push(leg);}root.userData.parts={torso,head,arms,legs};root.traverse(object=>{if(object.isMesh)object.castShadow=true;});
   const aura=new THREE.PointLight(0xc11928,1.2,6,2);aura.position.set(0,1.8,0);root.add(aura);
   root.visible=false;
 }
