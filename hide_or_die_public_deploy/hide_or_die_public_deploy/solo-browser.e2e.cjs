@@ -82,7 +82,9 @@ const { spawn } = require('node:child_process');
       for(let radius=0;radius<=8;radius+=.5){
         for(let dx=-radius;dx<=radius;dx+=.5) for(let dz=-radius;dz<=radius;dz+=.5){
           const x=-6+dx,z=2.5+dz;
-          if(api.clearAt(x,z)&&api.clearAt(x+1,z)&&api.clearAt(x-1,z)&&api.clearAt(x,z+1)&&api.clearAt(x,z-1))return{x,z};
+          // The player needs an unobstructed lane long enough for the full
+          // keyboard hold, not merely one clear step beside the spawn point.
+          if(api.clearAt(x,z)&&api.clearAt(x+1.5,z)&&api.clearAt(x-1.5,z)&&api.clearAt(x,z+1.5)&&api.clearAt(x,z-1.5))return{x,z};
         }
       }
       return null;
@@ -100,7 +102,7 @@ const { spawn } = require('node:child_process');
       const before=beforeState.position;
       const heading=beforeState.yaw;
       await page.keyboard.down(direction.key);
-      await page.waitForTimeout(500);
+      await page.waitForTimeout(350);
       const after=await page.evaluate(()=>window.__HOD_E2E__.snapshot().position);
       await page.keyboard.up(direction.key);
       const afterState=await page.evaluate(()=>window.__HOD_E2E__.snapshot());
