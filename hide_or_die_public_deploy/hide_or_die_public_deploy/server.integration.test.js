@@ -67,10 +67,10 @@ test('Socket.IO private room, host rules, co-op start and server validation',asy
  assert.ok(hostGame.world.monster);
 
  const moved=nextEvent(friend,'playerMoved');
- host.emit('move',{x:-18.5,z:-13.1,running:false,crouched:false,hidden:false});
+ host.emit('move',{x:-8.5,z:1.3,running:false,crouched:false,hidden:false});
  const movement=await moved;
  assert.equal(movement.id,host.id);
- assert.ok(Math.abs(movement.x-(-18.5))<.001);
+ assert.ok(Math.abs(movement.x-(-8.5))<.001);
 
  const objective=hostGame.world.objectives[0];
  const worldAfterDeniedInteract=nextEvent(host,'gameUpdate');
@@ -103,4 +103,29 @@ test('room host migrates when the current host disconnects',async t=>{
  assert.equal(three.players.length,2);
  const match=nextEvent(friend,'matchStart');friend.emit('startMatch');const started=await match;
  assert.equal(started.players.length,2,'new host must be able to start a match');
+});
+
+test('server blocks furniture movement, validates locker hiding and uses safe spawns',async t=>{
+ const {spawn}=require('node:child_process'),net=require('node:net'),path=require('node:path');
+ const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+ const probe=net.createServer();await new Promise(resolve=>probe.listen(0,'127.0.0.1',resolve));const port=probe.address().port;await new Promise(resolve=>probe.close(resolve));
+ const url='http://127.0.0.1:'+port,child=spawn(process.execPath,[path.join(__dirname,'server.js')],{cwd:__dirname,env:{...process.env,PORT:String(port)},stdio:'ignore'}),sockets=[];
+ t.after(()=>{for(const socket of sockets)socket.close();child.kill('SIGTERM');});
+ for(let n=0;n<60;n++){try{const response=await fetch(url+'/healthz');if(response.ok)break;}catch{}await wait(100);}
+ const connect=async()=>{const socket=io(url,{transports:['websocket'],reconnection:false});sockets.push(socket);await new Promise((resolve,reject)=>{socket.once('connect',resolve);socket.once('connect_error',reject);});return socket;};
+ const host=await connect(),friend=await connect();
+ const created=nextEvent(host,'roomUpdate');host.emit('createRoom',{name:'Host'});const room=await created;
+ const joinedHost=nextEvent(host,'roomUpdate'),joinedFriend=nextEvent(friend,'roomUpdate');friend.emit('joinRoom',{name:'Friend',code:room.code});await Promise.all([joinedHost,joinedFriend]);
+ const hostGame=nextEvent(host,'matchStart'),friendGame=nextEvent(friend,'matchStart');host.emit('startMatch');const [game]=await Promise.all([hostGame,friendGame]);
+ const spawnPoint=game.players.find(p=>p.id===host.id);assert.ok(spawnPoint);
+ assert.ok(Math.abs(spawnPoint.x-(-8.2))<.01&&Math.abs(spawnPoint.z-1.3)<.01,'player starts at a safe central-hub point');
+ let forwarded=false;const onMoved=data=>{if(data.id===host.id)forwarded=true;};friend.on('playerMoved',onMoved);
+ host.emit('move',{x:-9.4,z:2.8,running:false,crouched:false,hidden:false});
+ await wait(300);friend.off('playerMoved',onMoved);
+ assert.equal(forwarded,false,'server rejects a move into the locker collision volume');
+ const deniedHide=nextEvent(host,'hideState');host.emit('move',{x:-8.2,z:1.3,running:false,crouched:false,hidden:true});
+ assert.equal((await deniedHide).hidden,false,'server rejects hiding from outside locker range');
+ const approach=nextEvent(friend,'playerMoved');host.emit('move',{x:-9.4,z:1.8,running:false,crouched:false,hidden:false});await approach;
+ const hidden=nextEvent(host,'hideState');host.emit('move',{x:-9.4,z:1.8,running:false,crouched:false,hidden:true});
+ assert.equal((await hidden).hidden,true,'server accepts hiding at a valid collision-free locker approach');
 });

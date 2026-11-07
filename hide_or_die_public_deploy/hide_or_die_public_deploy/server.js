@@ -4,7 +4,7 @@ const http=require('http');
 const path=require('path');
 const crypto=require('crypto');
 const {Server}=require('socket.io');
-const {isWalkable,GRID_X,GRID_Z,stepToward}=require('./game-logic');
+const {isWalkable,isPlayerPathClear,GRID_X,GRID_Z,stepToward}=require('./game-logic');
 
 const app=express();
 const httpServer=http.createServer(app);
@@ -15,7 +15,10 @@ const MAX_PLAYERS=10;
 const ROUND_SECONDS=360;
 const EXIT={x:18,z:12};
 const PATROL=[{x:6,z:12},{x:-6,z:12},{x:-18,z:12},{x:-18,z:0},{x:-6,z:0},{x:6,z:0},{x:18,z:0},{x:18,z:-12},{x:6,z:-12},{x:-6,z:-12},{x:-18,z:-12}];
-const OBJECTIVES=[{x:-6.2,z:-12.2},{x:6.2,z:-12.1},{x:18.1,z:.2},{x:-18.1,z:.3},{x:-6.2,z:12.1},{x:6.3,z:12.2},{x:18.1,z:-12.1},{x:-6.1,z:.2}];
+const OBJECTIVES=[{x:-18.5,z:-9},{x:-9,z:-14.6},{x:3,z:-14.6},{x:20.2,z:-15},{x:-18.5,z:-3.1},{x:-3.3,z:-3.3},{x:3.2,z:-3.3},{x:15,z:-3.2},{x:-9.5,z:9},{x:2,z:9},{x:-18.5,z:15}];
+const HIDE_SPOTS=GRID_X.flatMap(x=>GRID_Z.flatMap(z=>[
+ {x:x+3.45,z:z+.5},{x:x-3.4,z:z+2.8}
+]));
 
 app.get('/healthz',(_req,res)=>res.json({ok:true,game:'HIDE OR DIE',rooms:rooms.size,uptime:Math.round(process.uptime())}));
 app.use('/vendor/three',express.static(path.join(__dirname,'node_modules','three','build'),{maxAge:'1d',fallthrough:false}));
@@ -91,14 +94,14 @@ io.on('connection',s=>{
   if(r.started)return s.emit('errorMsg','THIS MATCH IS ALREADY RUNNING');
   if(r.players.size<2)return s.emit('errorMsg','INVITE AT LEAST ONE FRIEND TO START CO-OP');
   r.started=true;r.ended=false;r.game=newGame();let i=0;
-  for(const p of r.players.values()){p.x=-19.2+(i%5)*.45;p.z=-13.1+Math.floor(i/5)*.7;p.alive=true;p.escaped=false;p.hidden=false;p.running=false;i++;}
+  for(const p of r.players.values()){p.x=-8.2+(i%5)*.82;p.z=1.3+Math.floor(i/5)*1.0;p.alive=true;p.escaped=false;p.hidden=false;p.running=false;p.crouched=false;i++;}
   io.to(r.code).emit('matchStart',{world:worldView(r),players:[...r.players.values()].map(p=>({id:p.id,x:p.x,z:p.z,name:p.name,avatar:p.avatar,alive:true}))});
  });
  s.on('move',v=>{
   const r=rooms.get(s.data.room),p=r&&r.players.get(s.id);if(!r||!r.started||!p||!p.alive||p.escaped)return;
-  const x=Number(v&&v.x),z=Number(v&&v.z);if(!isWalkable(x,z))return;
+  const x=Number(v&&v.x),z=Number(v&&v.z);if(!isPlayerPathClear(p,{x,z},.34))return;
   const now=Date.now(),dt=Math.max(.04,Math.min(.5,(now-s.data.lastMove)/1000));if(dist(p,{x,z})>8.5*dt+.85)return;
-  s.data.lastMove=now;p.x=x;p.z=z;p.running=!!(v&&v.running);p.crouched=!!(v&&v.crouched);p.hidden=!!(v&&v.hidden)&&HIDE_SPOTS.some(spot=>dist(p,spot)<1.55);
+  s.data.lastMove=now;p.x=x;p.z=z;p.running=!!(v&&v.running);p.crouched=!!(v&&v.crouched);p.hidden=!!(v&&v.hidden)&&HIDE_SPOTS.some(spot=>dist(p,spot)<1.55);if(v&&v.hidden)s.emit('hideState',{hidden:p.hidden});
   s.to(r.code).emit('playerMoved',{id:s.id,x,z,running:p.running,hidden:p.hidden});
  });
  s.on('interactObjective',v=>{
