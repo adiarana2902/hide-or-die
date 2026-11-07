@@ -37,12 +37,16 @@ test('facility room props define the trim material used by locker details',()=>{
  assert.match(props,/addBox\(parent,\.08,2\.2,\.07,[^;]+trimMat\)/);
 });
 
-test('movement basis matches Three.js camera forward and right at the game spawn yaw',()=>{
+test('movement uses camera-relative WASD and swept collision helpers',()=>{
  const fs=require('node:fs'),path=require('node:path'),html=fs.readFileSync(path.join(__dirname,'public','index.html'),'utf8');
  const start=html.indexOf('function updateMovement(dt){'),end=html.indexOf('\nfunction updateMonster',start),movement=html.slice(start,end);
- assert.match(movement,/new THREE\.Vector3\(-Math\.sin\(state\.yaw\),0,-Math\.cos\(state\.yaw\)\)/);
- assert.match(movement,/new THREE\.Vector3\(Math\.cos\(state\.yaw\),0,-Math\.sin\(state\.yaw\)\)/);
- const yaw=Math.PI/2,forward=[-Math.sin(yaw),-Math.cos(yaw)],right=[Math.cos(yaw),-Math.sin(yaw)];
- assert.ok(forward[0]<-.99&&Math.abs(forward[1])<1e-9,'W must move in the direction the spawned camera faces');
- assert.ok(Math.abs(right[0])<1e-9&&right[1]<-.99,'D must move to the spawned camera right');
+ assert.match(movement,/HODSoloCore\.movementDelta\(state\.yaw,f,s,speed\*dt\)/);
+ assert.match(movement,/HODSoloCore\.resolveMove\(state\.localPos,delta/);
+ assert.match(html,/state\.yaw=0/);
+ const {movementDelta}=require('./solo-core');
+ const forward=movementDelta(0,1,0,1),back=movementDelta(0,-1,0,1),right=movementDelta(0,0,1,1),left=movementDelta(0,0,-1,1);
+ assert.deepEqual(forward,{x:0,z:-1});assert.deepEqual(back,{x:0,z:1});
+ assert.deepEqual(right,{x:1,z:0});assert.deepEqual(left,{x:-1,z:0});
+ const turned=movementDelta(Math.PI/2,1,0,1);
+ assert.ok(turned.x<-.99&&Math.abs(turned.z)<1e-9,'W must follow the camera after turning');
 });
