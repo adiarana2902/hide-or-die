@@ -137,9 +137,13 @@ const { spawn } = require('node:child_process');
     await page.evaluate(()=>{const s=window.__HOD_E2E__.snapshot();window.__HOD_E2E__.setPosition(18,12);window.__HOD_E2E__.interact();});
     await page.waitForFunction(()=>document.querySelector('#endScreen').style.display==='grid',null,{timeout:5000});
     assert.match(await page.locator('#endTitle').innerText(),/EXTRACTION SUCCESSFUL/);
+    const career=await page.evaluate(()=>JSON.parse(localStorage.getItem('hod-career-v1')||'{}'));
+    assert.ok(career.wins>=1&&career.xp>=150&&career.completed.includes(initial.scenario),'Successful extraction should persist story progress and XP reward');
     await page.locator('#replayButton').click();
     await page.waitForFunction(()=>window.__HOD_E2E__.snapshot().screen==='game',null,{timeout:10000});
-    assert.equal((await page.evaluate(()=>window.__HOD_E2E__.snapshot())).found,0,'Replay should reset objective count');
+    const replayState=await page.evaluate(()=>window.__HOD_E2E__.snapshot());
+    assert.equal(replayState.found,0,'Replay should reset objective count');
+    assert.notEqual(replayState.scenario,initial.scenario,'Replay should offer a different uncompleted incident');
 
     await page.evaluate(()=>window.__HOD_E2E__.forceDeath());
     await page.waitForFunction(()=>document.querySelector('#endScreen').style.display==='grid',{timeout:5000});
