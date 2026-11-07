@@ -103,6 +103,7 @@ function shuffled(list){const a=[...list];for(let i=a.length-1;i>0;i--){const j=
 function distance(a,b){return Math.hypot(a.x-b.x,a.z-b.z);}
 function nearestRoom(point){let best=null,bestDistance=Infinity;for(let ix=0;ix<GRID_X.length;ix++)for(let iz=0;iz<GRID_Z.length;iz++){const d=Math.hypot(point.x-GRID_X[ix],point.z-GRID_Z[iz]);if(d<bestDistance){best={ix,iz,x:GRID_X[ix],z:GRID_Z[iz]};bestDistance=d;}}return best;}
 function roomPath(from,to){const start=nearestRoom(from),goal=nearestRoom(to),key=n=>n.ix+','+n.iz,startKey=key(start),goalKey=key(goal),queue=[start],previous=new Map([[startKey,null]]);for(let i=0;i<queue.length;i++){const c=queue[i],ck=key(c);if(ck===goalKey)break;for(const [ix,iz] of [[c.ix-1,c.iz],[c.ix+1,c.iz],[c.ix,c.iz-1],[c.ix,c.iz+1]]){if(ix<0||ix>=GRID_X.length||iz<0||iz>=GRID_Z.length)continue;const n={ix,iz,x:GRID_X[ix],z:GRID_Z[iz]},nk=key(n);if(previous.has(nk))continue;previous.set(nk,ck);queue.push(n);}}const path=[];let cursor=goalKey;if(!previous.has(goalKey))return[start];while(cursor){const [ix,iz]=cursor.split(',').map(Number);path.push({ix,iz,x:GRID_X[ix],z:GRID_Z[iz]});cursor=previous.get(cursor);}return path.reverse();}
+function nearestClearPoint(point,radius=.42){if(isPlayerClear(point.x,point.z,radius))return{x:point.x,z:point.z};for(let ring=1;ring<=12;ring++){const offset=ring*.35;for(let i=-ring;i<=ring;i++){for(const [dx,dz] of [[i*.35,-offset],[i*.35,offset],[-offset,i*.35],[offset,i*.35]]){const x=point.x+dx,z=point.z+dz;if(isPlayerClear(x,z,radius))return{x,z};}}}return{x:point.x,z:point.z};}
 function moveOnFacility(from,to,step){if(!isWalkable(to.x,to.z))return from;const path=roomPath(from,to),start=path[0],sameRoom=path.length===1;let waypoint=to;if(!sameRoom){const next=path[1];if(start.iz===next.iz&&Math.abs(from.z-start.z)>.08)waypoint={x:from.x,z:start.z};else if(start.ix===next.ix&&Math.abs(from.x-start.x)>.08)waypoint={x:start.x,z:from.z};else waypoint=next;}const dx=waypoint.x-from.x,dz=waypoint.z-from.z,d=Math.hypot(dx,dz);if(d<=step&&isWalkable(waypoint.x,waypoint.z))return{x:waypoint.x,z:waypoint.z};const amount=Math.min(step,d);if(sameRoom){const scale=amount/(d||1),x=from.x+dx*scale,z=from.z+dz*scale;if(isWalkable(x,z))return{x,z};}const candidates=Math.abs(dx)>=Math.abs(dz)?[{x:from.x+Math.sign(dx)*Math.min(amount,Math.abs(dx)),z:from.z},{x:from.x,z:from.z+Math.sign(dz)*Math.min(amount,Math.abs(dz))}]:[{x:from.x,z:from.z+Math.sign(dz)*Math.min(amount,Math.abs(dz))},{x:from.x+Math.sign(dx)*Math.min(amount,Math.abs(dx)),z:from.z}];return candidates.find(p=>isWalkable(p.x,p.z))||from;}
 function isWalkable(x,z){
   if(!Number.isFinite(x)||!Number.isFinite(z)||Math.abs(x)>23||Math.abs(z)>17)return false;
@@ -300,7 +301,7 @@ function updateRemotePlayers(players){
 }
 function startSolo(){
   const scenario=randomFrom(SCENARIOS);const spawn={x:-6,z:2.5};const valid=window.HODSoloCore.chooseObjectives(OBJECTIVE_SPOTS,(x,z)=>isPlayerClear(x,z,.22),spawn,3);const chosen=valid.length===3?valid:shuffled(OBJECTIVE_SPOTS).slice(0,3);const objectives=chosen.map((spot,index)=>({id:`solo-cell-${index+1}`,x:spot.x,z:spot.z,label:scenario.clues[index],collected:false}));
-  const world={objectives,exit:{x:18,z:12},monster:{x:18,z:-12,state:'patrol'},timeLeft:360,exitUnlocked:false};startWorld('solo',world,[],scenario);
+  const world={objectives,exit:{x:18,z:12},monster:{...nearestClearPoint({x:18,z:-12},.42),state:'patrol'},timeLeft:360,exitUnlocked:false};startWorld('solo',world,[],scenario);
 }
 function interact(){
   if(state.screen!=='game'||state.hidden||state.dead)return;
@@ -332,7 +333,7 @@ function drawMiniMap(){
 function finishSolo(won,cause){if(state.screen!=='game'||state.dead)return;state.dead=true;state.keys={};state.running=false;document.exitPointerLock?.();$('operatorLabel').textContent=won?'EXTRACTED':'LOST';$('endTitle').textContent=won?'EXTRACTION SUCCESSFUL':'CONTAINMENT FAILED';$('endText').textContent=(cause|| (won?(state.localRun?.scenario.ending||'You escaped Blackridge.'):'The specimen caught you before extraction.'))+' · '+(state.localRun?.scenario.title||'SOLO INCIDENT')+' · POWER CELLS '+(state.localRun?.found||0)+'/3';const reveal=()=>{if(state.screen==='game'){$('endScreen').style.display='grid';state.screen='ended';}};if(!won){$('gameCanvas').classList.add('deathHit');jumpscare();setTimeout(()=>{$('gameCanvas').classList.remove('deathHit');reveal();},520);}else reveal();}
 function updateSolo(dt){
   const run=state.localRun;if(!run)return;
-  const now=Date.now(),patrol=[{x:18,z:-12},{x:6,z:-12},{x:-6,z:-12},{x:-18,z:-12},{x:-18,z:0},{x:-18,z:12},{x:-6,z:12},{x:6,z:12},{x:18,z:12},{x:18,z:0},{x:6,z:0},{x:-6,z:0}];
+  const now=Date.now(),patrol=[{x:18,z:-12},{x:6,z:-12},{x:-6,z:-12},{x:-18,z:-12},{x:-18,z:0},{x:-18,z:12},{x:-6,z:12},{x:6,z:12},{x:18,z:12},{x:18,z:0},{x:6,z:0},{x:-6,z:0}].map(point=>nearestClearPoint(point,.42));
   const enemy=run.enemy,playerDistance=distance(enemy,state.localPos);let target=null,threat='patrol',speed=.82;
   if(now>=run.graceUntil&&!state.hidden){
     const heard=state.running&&playerDistance<20,seen=playerDistance<(state.crouched?4.2:10)&&window.HODSoloCore.canSeeTarget(enemy,state.localPos,(x,z)=>isPlayerClear(x,z,.05));
@@ -345,6 +346,7 @@ function updateSolo(dt){
   if(run.lastKnown&&now>=run.searchUntil)run.lastKnown=null;
   state.monster.position.set(enemy.x,Math.sin(now*.006)*.035,enemy.z);state.monsterTarget={...enemy,state:threat};$('threatLabel').textContent=threat.toUpperCase();
   const contactDistance=distance(enemy,state.localPos);if(now>=run.graceUntil&&!state.hidden&&contactDistance<1.35&&(threat==='chase'||threat==='investigate')){finishSolo(false,'THE SPECIMEN CAUGHT YOU IN THE FACILITY.');return;}
+  if(now>=run.graceUntil&&state.hidden&&contactDistance<2.0){finishSolo(false,'THE SPECIMEN FOUND YOU HIDING IN A LOCKER.');return;}
   if(now>run.lastScare){run.lastScare=now+18000+Math.random()*14000;if(playerDistance<14&&Math.random()<.42)jumpscare();else if(Math.random()<.45)playTone(125,.3,'triangle',.035);}
   state.world.timeLeft=Math.max(0,360-Math.floor((now-run.startedAt)/1000));const time=state.world.timeLeft;$('timerLabel').textContent=String(Math.floor(time/60)).padStart(2,'0')+':'+String(time%60).padStart(2,'0');if(time<=0)finishSolo(false,'TIME EXPIRED — THE FACILITY SEALED ITS EMERGENCY EXITS.');
 }
