@@ -99,3 +99,9 @@ test('Solo monster continues searching the last known location while player hide
  assert.match(hide,/canSeeTarget\(run\.enemy,state\.localPos/);
  assert.match(hide,/searchUntil=Date\.now\(\)\+10000/);
 });
+
+test('Solo controls clear held keys when the browser loses focus',()=>{
+ const fs=require('node:fs'),path=require('node:path'),html=fs.readFileSync(path.join(__dirname,'public','index.html'),'utf8');
+ assert.match(html,/addEventListener\('blur',\(\)=>\{state\.keys=\{\};state\.running=false;\}\)/);
+ assert.match(html,/addEventListener\('visibilitychange',\(\)=>\{if\(document\.hidden\)\{state\.keys=\{\};state\.running=false;\}\}\)/);
+});
