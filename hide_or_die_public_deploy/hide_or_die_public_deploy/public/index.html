@@ -102,7 +102,7 @@ if(new URLSearchParams(location.search).has('e2e')){
   window.__HOD_E2E__={
     snapshot:()=>({screen:state.screen,mode:state.mode,position:{...state.localPos},yaw:state.yaw,hidden:state.hidden,dead:state.dead,found:state.localRun?.found||0,scenario:state.localRun?.scenario.title||null,objectives:state.world?.objectives?.map(o=>({...o}))||[],rooms:ROOMS.map(r=>({name:r.name,x:r.x,z:r.z})),hideSpots:state.hideSpots.map(p=>({...p}))}),
     setPosition:(x,z)=>{state.localPos={x,z};if(state.camera){state.camera.position.x=x;state.camera.position.z=z;}},
-    clearAt:(x,z)=>isPlayerClear(x,z,.34),
+    clearAt:(x,z)=>isPlayerClear(x,z,.34),interact:()=>interact(),toggleHide:()=>toggleHide(),
     forceDeath:()=>finishSolo(false,'E2E DEATH CHECK')
   };
 }
