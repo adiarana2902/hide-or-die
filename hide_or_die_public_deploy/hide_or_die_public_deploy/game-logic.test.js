@@ -62,7 +62,7 @@ test('solo monster uses line of sight, obstacle-aware pathing and locker searche
  const fs=require('node:fs'),path=require('node:path'),html=fs.readFileSync(path.join(__dirname,'public','index.html'),'utf8');
  assert.match(html,/canSeeTarget\(enemy,state\.localPos/);
  assert.match(html,/resolveMove\(enemy,delta/);
- assert.match(html,/state\.hidden&&contactDistance<2\.0/);
+ assert.match(html,/state\.hidden&&contactDistance<1\.7/);assert.match(html,/damagePlayer\(45,'THE CREATURE SEARCHED YOUR LOCKER'\)/);
 });
 test('solo replay resets run state and returns through the shared startup path',()=>{
  const fs=require('node:fs'),path=require('node:path'),html=fs.readFileSync(path.join(__dirname,'public','index.html'),'utf8');
@@ -104,4 +104,15 @@ test('Solo controls clear held keys when the browser loses focus',()=>{
  const fs=require('node:fs'),path=require('node:path'),html=fs.readFileSync(path.join(__dirname,'public','index.html'),'utf8');
  assert.match(html,/addEventListener\('blur',\(\)=>\{state\.keys=\{\};state\.running=false;\}\)/);
  assert.match(html,/addEventListener\('visibilitychange',\(\)=>\{if\(document\.hidden\)\{state\.keys=\{\};state\.running=false;\}\}\)/);
+});
+
+test('Solo incident includes inventory, evidence inspection, medkits, health and pause controls',()=>{
+ const fs=require('node:fs'),path=require('node:path'),html=fs.readFileSync(path.join(__dirname,'public','index.html'),'utf8');
+ for(const id of ['inventoryPanel','journalPanel','inspectPanel','pausePanel','healthFill','damageVignette','resumeButton','settingsButton'])assert.match(html,new RegExp('id="'+id+'"'));
+ for(const feature of ['function refreshInventory','function showEvidence','function damagePlayer','function setupSoloSystems','function collectPickup','function useInventoryItem','function openPause'])assert.ok(html.includes(feature),feature+' should exist');
+ assert.match(html,/Security keycard/);assert.match(html,/Shift report/);assert.match(html,/Damaged voice recorder/);assert.match(html,/Emergency medkit/);
+});
+test('Solo pause freezes monster simulation and player movement',()=>{
+ const fs=require('node:fs'),path=require('node:path'),html=fs.readFileSync(path.join(__dirname,'public','index.html'),'utf8');
+ assert.match(html,/if\(!run\|\|state\.paused\)return/);assert.match(html,/if\(state\.hidden\|\|state\.dead\|\|state\.paused\)return/);
 });
