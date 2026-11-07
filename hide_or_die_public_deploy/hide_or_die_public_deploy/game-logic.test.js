@@ -129,3 +129,8 @@ test('Solo security wing requires a keycard and unlocks its physical doorway',()
  const fs=require('node:fs'),path=require('node:path'),html=fs.readFileSync(path.join(__dirname,'public','index.html'),'utf8');
  assert.match(html,/function unlockSecurityDoor\(\)/);assert.match(html,/run\.inventory\.includes\('keycard'\)/);assert.match(html,/run\.doors\.security=true/);assert.match(html,/state\.securityDoor\.position\.y=4\.2/);assert.match(html,/state\.localRun\.doors\?\.security/);
 });
+
+test('Solo story archives completed incidents and rewards XP while prioritizing unseen incidents',()=>{
+ const fs=require('node:fs'),path=require('node:path'),html=fs.readFileSync(path.join(__dirname,'public','index.html'),'utf8');
+ assert.match(html,/function recordIncident\(won\)/);assert.match(html,/c\.xp\+=won\?150:35/);assert.match(html,/localStorage\.setItem\('hod-career-v1'/);assert.match(html,/SCENARIOS\.filter\(item=>!career\.completed\.includes\(item\.title\)\)/);
+});
