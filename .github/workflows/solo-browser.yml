@@ -1,0 +1,26 @@
+name: Solo browser gameplay QA
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  solo-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install app and browser automation
+        working-directory: hide_or_die_public_deploy/hide_or_die_public_deploy
+        run: npm install --no-audit --no-fund && npm install --no-save playwright --no-audit --no-fund
+      - name: Install Chromium
+        working-directory: hide_or_die_public_deploy/hide_or_die_public_deploy
+        run: npx playwright install --with-deps chromium
+      - name: Run Solo browser gameplay checks
+        working-directory: hide_or_die_public_deploy/hide_or_die_public_deploy
+        run: node solo-browser.e2e.cjs
