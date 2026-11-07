@@ -1,0 +1,30 @@
+name: HIDE OR DIE QA
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+        working-directory: hide_or_die_public_deploy/hide_or_die_public_deploy
+      - name: Check server syntax
+        run: node --check server.js
+        working-directory: hide_or_die_public_deploy/hide_or_die_public_deploy
+      - name: Check game logic syntax
+        run: node --check game-logic.js
+        working-directory: hide_or_die_public_deploy/hide_or_die_public_deploy
+      - name: Run gameplay regression tests
+        run: npm test
+        working-directory: hide_or_die_public_deploy/hide_or_die_public_deploy
