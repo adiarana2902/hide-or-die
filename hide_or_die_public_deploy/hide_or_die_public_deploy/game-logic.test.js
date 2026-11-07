@@ -45,3 +45,14 @@ test('WASD movement mapping uses W forward, S backward, A left and D right',()=>
  assert.match(movement,/const f=\(keys\.KeyS\?1:0\)-\(keys\.KeyW\?1:0\)\+\(keys\.ArrowUp\?1:0\)-\(keys\.ArrowDown\?1:0\)/);
  assert.match(movement,/const s=\(keys\.KeyA\?1:0\)-\(keys\.KeyD\?1:0\)\+\(keys\.ArrowRight\?1:0\)-\(keys\.ArrowLeft\?1:0\)/);
 });
+
+test('WASD and arrow keys map to camera-relative forward, backward, left and right',()=>{
+ const fs=require('node:fs'),path=require('node:path'),html=fs.readFileSync(path.join(__dirname,'public','index.html'),'utf8');
+ const start=html.indexOf('function updateMovement(dt){'),end=html.indexOf('\nfunction updateMonster',start);
+ assert.ok(start>=0&&end>start);
+ const movement=html.slice(start,end);
+ assert.match(movement,/const f=\(keys\.KeyW\|\|keys\.ArrowUp\?1:0\)-\(keys\.KeyS\|\|keys\.ArrowDown\?1:0\)/);
+ assert.match(movement,/const s=\(keys\.KeyD\|\|keys\.ArrowRight\?1:0\)-\(keys\.KeyA\|\|keys\.ArrowLeft\?1:0\)/);
+ assert.match(movement,/new THREE\.Vector3\(Math\.sin\(state\.yaw\),0,-Math\.cos\(state\.yaw\)\)/);
+ assert.match(movement,/new THREE\.Vector3\(Math\.cos\(state\.yaw\),0,Math\.sin\(state\.yaw\)\)/);
+});

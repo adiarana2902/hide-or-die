@@ -348,7 +348,7 @@ function updateSolo(dt){
 }
 function updateMovement(dt){
   if(state.hidden||state.dead)return;
-  const keys=state.keys;const f=(keys.KeyS?1:0)-(keys.KeyW?1:0)+(keys.ArrowUp?1:0)-(keys.ArrowDown?1:0);const s=(keys.KeyA?1:0)-(keys.KeyD?1:0)+(keys.ArrowRight?1:0)-(keys.ArrowLeft?1:0);const moving=!!(f||s);const sprint=moving&&(keys.ShiftLeft||keys.ShiftRight)&&state.stamina>1;const crouch=keys.ControlLeft||keys.ControlRight;state.running=!!(sprint&&!crouch);state.crouched=!!crouch;
+  const keys=state.keys;const f=(keys.KeyW||keys.ArrowUp?1:0)-(keys.KeyS||keys.ArrowDown?1:0);const s=(keys.KeyD||keys.ArrowRight?1:0)-(keys.KeyA||keys.ArrowLeft?1:0);const moving=!!(f||s);const sprint=moving&&(keys.ShiftLeft||keys.ShiftRight)&&state.stamina>1;const crouch=keys.ControlLeft||keys.ControlRight;state.running=!!(sprint&&!crouch);state.crouched=!!crouch;
   if(sprint)state.stamina=Math.max(0,state.stamina-29*dt);else state.stamina=Math.min(100,state.stamina+18*dt);
   const speed=crouch?1.55:sprint?5.15:3.05;const forward=new THREE.Vector3(Math.sin(state.yaw),0,-Math.cos(state.yaw));const right=new THREE.Vector3(Math.cos(state.yaw),0,Math.sin(state.yaw));const dir=forward.multiplyScalar(f).add(right.multiplyScalar(s));if(dir.lengthSq()>0)dir.normalize().multiplyScalar(speed*dt);
   const nx=state.localPos.x+dir.x,nz=state.localPos.z+dir.z;if(isPlayerPathClear(state.localPos,{x:nx,z:state.localPos.z}))state.localPos.x=nx;if(isPlayerPathClear(state.localPos,{x:state.localPos.x,z:nz}))state.localPos.z=nz;
