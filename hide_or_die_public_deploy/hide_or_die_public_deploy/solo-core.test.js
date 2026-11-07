@@ -1,7 +1,7 @@
 'use strict';
 const test=require('node:test');
 const assert=require('node:assert/strict');
-const {movementDelta,resolveMove,canSeeTarget,chooseObjectives}=require('./solo-core');
+const {movementDelta,resolveMove,canSeeTarget,isWithinVisionCone,chooseObjectives}=require('./solo-core');
 
 test('camera-relative WASD vectors point in the expected direction at default yaw',()=>{
  const d=movementDelta(0,1,0,1);
@@ -36,4 +36,10 @@ test('objective selection excludes blocked spots and spawn-adjacent spots',()=>{
  const selected=chooseObjectives(spots,(x)=>x!==8,{x:0,z:0},3);
  assert.equal(selected.length,2);
  assert.ok(selected.every(p=>Math.hypot(p.x,p.z)>3.5&&p.x!==8));
+});
+test('monster vision cone only detects targets in front of its facing direction',()=>{
+ const from={x:0,z:0},facing={x:0,z:-1};
+ assert.equal(isWithinVisionCone(from,{x:0,z:-5},facing,.3),true);
+ assert.equal(isWithinVisionCone(from,{x:5,z:0},facing,.3),false);
+ assert.equal(isWithinVisionCone(from,{x:0,z:5},facing,.3),false);
 });
