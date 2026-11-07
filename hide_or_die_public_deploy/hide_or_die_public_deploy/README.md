@@ -40,7 +40,7 @@ npm start
 
 Open `http://localhost:3000` in a modern desktop browser with WebGL enabled.
 
-Run the geometry and monster-path regression test suite with:
+Run the geometry, monster-path and Socket.IO room-flow regression tests with:
 
 ```bash
 npm test
