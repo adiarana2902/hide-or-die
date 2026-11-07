@@ -368,10 +368,9 @@ function finishSolo(won,cause){if(state.screen!=='game'||state.dead)return;state
 function updateSolo(dt){
   const run=state.localRun;if(!run||state.paused)return;
   const now=Date.now(),patrol=[{x:18,z:-12},{x:6,z:-12},{x:-6,z:-12},{x:-18,z:-12},{x:-18,z:0},{x:-18,z:12},{x:-6,z:12},{x:6,z:12},{x:18,z:12},{x:18,z:0},{x:6,z:0},{x:-6,z:0}].map(point=>nearestClearPoint(point,.42));
-  const enemy=run.enemy,playerDistance=distance(enemy,state.localPos);let target=null,threat='patrol',speed=.82;
+  const enemy=run.enemy,playerDistance=distance(enemy,state.localPos),ai=run.scenario?.ai||{hearing:1,vision:1,search:1,pace:1};let target=null,threat='patrol',speed=.82;
   if(now>=run.graceUntil){
-    if(!state.hidden){
-      const ai=run.scenario?.ai||{hearing:1,vision:1,search:1,pace:1};const noise=run.lastNoise,heard=!!noise&&now-run.lastNoiseAt<1900&&distance(enemy,noise)<noise.radius*ai.hearing;const visible=playerDistance<(state.crouched?4.2:10)*ai.vision&&window.HODSoloCore.canSeeTarget(enemy,state.localPos,(x,z)=>isPlayerClear(x,z,.05));
+    if(!state.hidden){const noise=run.lastNoise,heard=!!noise&&now-run.lastNoiseAt<1900&&distance(enemy,noise)<noise.radius*ai.hearing;const visible=playerDistance<(state.crouched?4.2:10)*ai.vision&&window.HODSoloCore.canSeeTarget(enemy,state.localPos,(x,z)=>isPlayerClear(x,z,.05));
       if(heard||visible){run.lastKnown={x:state.localPos.x,z:state.localPos.z};run.searchUntil=now+(heard?6500:5200)*ai.search;run.lastNoiseAt=now;}
       if(run.noiseUntil>now&&!run.lastKnown){run.lastKnown={x:state.localPos.x,z:state.localPos.z};run.searchUntil=run.noiseUntil;}
     }
