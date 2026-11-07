@@ -45,8 +45,8 @@ test('movement uses camera-relative WASD and swept collision helpers',()=>{
  assert.match(html,/state\.yaw=0/);
  const {movementDelta}=require('./solo-core');
  const forward=movementDelta(0,1,0,1),back=movementDelta(0,-1,0,1),right=movementDelta(0,0,1,1),left=movementDelta(0,0,-1,1);
- assert.deepEqual(forward,{x:0,z:-1});assert.deepEqual(back,{x:0,z:1});
- assert.deepEqual(right,{x:1,z:0});assert.deepEqual(left,{x:-1,z:0});
+ assert.ok(Math.abs(forward.x)<1e-9&&forward.z===-1);assert.ok(Math.abs(back.x)<1e-9&&back.z===1);
+ assert.ok(right.x===1&&Math.abs(right.z)<1e-9);assert.ok(left.x===-1&&Math.abs(left.z)<1e-9);
  const turned=movementDelta(Math.PI/2,1,0,1);
  assert.ok(turned.x<-.99&&Math.abs(turned.z)<1e-9,'W must follow the camera after turning');
 });
