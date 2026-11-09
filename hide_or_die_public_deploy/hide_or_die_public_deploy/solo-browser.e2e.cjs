@@ -166,6 +166,37 @@ const { spawn } = require('node:child_process');
     await page.waitForFunction(()=>window.__HOD_E2E__.snapshot().screen==='game');
     assert.equal((await page.evaluate(()=>window.__HOD_E2E__.snapshot())).dead,false,'Replay after death should reset player state');
     assert.deepEqual(errors,[],'Browser console should have no uncaught page errors');
-    process.stdout.write('SOLO BROWSER QA PASSED: start, WASD, all rooms/corridors, objectives, hiding, extraction, death, replay.\\n');
+    // Mobile viewport QA: touch HUD, joystick movement and compact layout.
+    const mobile=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true,deviceScaleFactor:2});
+    mobile.setDefaultTimeout(15000);
+    const mobileErrors=[];mobile.on('pageerror',e=>mobileErrors.push(e.message));
+    await mobile.goto('http://127.0.0.1:4173/?e2e=1',{waitUntil:'domcontentloaded'});
+    await mobile.locator('#soloButton').click();
+    await mobile.waitForFunction(()=>window.__HOD_E2E__?.snapshot().screen==='game',null,{timeout:20000});
+    assert.equal(await mobile.locator('#mobileControls').evaluate(el=>getComputedStyle(el).display),'block','Mobile touch controls should be visible at phone width');
+    assert.equal(await mobile.locator('#mobileStick').isVisible(),true,'Movement joystick should be visible');
+    const mobileStart=await mobile.evaluate(()=>{
+      const api=window.__HOD_E2E__;
+      for(let z=-14;z<14;z+=.5)for(let x=-20;x<20;x+=.5)if(api.clearAt(x,z)&&api.clearAt(x,z-1.2))return{x,z};
+      return null;
+    });
+    assert.ok(mobileStart,'Mobile QA should find a clear movement lane');
+    await mobile.evaluate(({x,z})=>{window.__HOD_E2E__.setPosition(x,z);window.__HOD_E2E__.setYaw(0);},mobileStart);
+    const stickBox=await mobile.locator('#mobileStick').boundingBox();
+    await mobile.mouse.move(stickBox.x+stickBox.width/2,stickBox.y+stickBox.height/2);
+    await mobile.mouse.down();
+    await mobile.mouse.move(stickBox.x+stickBox.width/2,stickBox.y+stickBox.height/2-42,{steps:5});
+    await mobile.waitForTimeout(500);
+    const mobileMoved=await mobile.evaluate(()=>window.__HOD_E2E__.snapshot().position);
+    await mobile.mouse.up();
+    assert.ok(mobileMoved.z<mobileStart.z-.25,'Mobile joystick drag should move the player forward');
+    await mobile.locator('#touchInventory').tap();
+    assert.equal(await mobile.locator('#inventoryPanel').evaluate(el=>el.style.display),'grid','Mobile inventory action should open inventory');
+    await mobile.locator('#touchInventory').tap();
+    await mobile.locator('#touchJournal').tap();
+    assert.equal(await mobile.locator('#journalPanel').evaluate(el=>el.style.display),'grid','Mobile journal action should open journal');
+    assert.deepEqual(mobileErrors,[],'Mobile browser should have no uncaught page errors');
+    await mobile.close();
+    process.stdout.write('SOLO + MOBILE BROWSER QA PASSED: start, WASD, all rooms/corridors, objectives, hiding, extraction, death, replay, mobile joystick and touch HUD.\\n');
   }finally{if(browser)await browser.close();server.kill('SIGTERM');}
 })().catch(e=>{console.error(e);process.exitCode=1;});
