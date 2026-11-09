@@ -94,7 +94,9 @@ test('Solo monster continues searching the last known location while player hide
  const fs=require('node:fs'),path=require('node:path'),html=fs.readFileSync(path.join(__dirname,'public','index.html'),'utf8');
  const start=html.indexOf('function updateSolo(dt){'),end=html.indexOf('\nfunction updateMovement',start),ai=html.slice(start,end);
  assert.match(ai,/if\(now>=run\.graceUntil\)\{\s*if\(!state\.hidden\)\{/);
- assert.match(ai,/if\(run\.lastKnown&&now<run\.searchUntil\)\{[^}]*target=run\.lastKnown/);\n  assert.match(ai,/run\.searchSweep/);\n  assert.match(ai,/threat='searching'/);
+ assert.match(ai,/if\(run\.lastKnown&&now<run\.searchUntil\)\{[^}]*target=run\.lastKnown/);
+ assert.match(ai,/run\.searchSweep/);
+ assert.match(ai,/threat='searching'/);
  const hide=html.slice(html.indexOf('function toggleHide()'),html.indexOf('function toggleFlashlight'));
  assert.match(hide,/canSeeTarget\(run\.enemy,state\.localPos/);
  assert.match(hide,/searchUntil=Date\.now\(\)\+10000/);
