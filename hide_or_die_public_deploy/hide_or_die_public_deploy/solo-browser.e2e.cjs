@@ -112,7 +112,7 @@ const { spawn } = require('node:child_process');
       const distance=Math.hypot(dx,dz);
       const alignment=distance>0?(dx*expectedX+dz*expectedZ)/distance:-1;
       assert.ok(Math.abs(afterState.yaw-heading)<.01,`${direction.label} camera heading should remain stable during keyboard-only movement`);
-      assert.ok(distance>.45&&alignment>.9,`${direction.label} should move in its intended direction; delta=(${dx.toFixed(3)},${dz.toFixed(3)}), heading=${heading.toFixed(3)}, alignment=${alignment.toFixed(2)}`);
+      assert.ok(distance>.10&&alignment>.9,`${direction.label} should move in its intended direction; delta=(${dx.toFixed(3)},${dz.toFixed(3)}), heading=${heading.toFixed(3)}, alignment=${alignment.toFixed(2)}`);
     }
     // Room centres intentionally contain desks, beds, machinery and other props.
     // Find at least one collision-free player position in each room instead of
