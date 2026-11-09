@@ -439,8 +439,46 @@ const EVIDENCE_ITEMS=[
  {id:'medkit',name:'Emergency medkit',kind:'MEDICAL',text:'FIELD MEDICAL KIT\nA sealed trauma dressing and one injector. Restores up to 45 health when used from the inventory.'},
  {id:'schematic',name:'Facility schematic',kind:'DOCUMENT',text:'FACILITY MAINTENANCE NOTE\nAuxiliary power is routed through the generator room. The emergency exit remains locked until all three power cells are recovered.'}
 ];
+const STORY_RECORDS={
+ 'THE WARDEN':{
+  keycard:'BLACKRIDGE SECURITY / ACCESS LOG\n02:03 — WARDEN UNIT RELEASED FROM LOWER HOLDING.\n02:09 — Three staff badges used at the same reader. Only one person was present.\n02:14 — If you hear the service lift, do not look for the operator.',
+  report:'NIGHT SHIFT REPORT — WARDEN DETAIL\nThe Warden does not patrol the facility. It patrols the people inside it. The camera feeds show it arriving several seconds before the alarms.',
+  recording:'VOICE RECORDER — GUARD POST\n“Keep the lights on. It stands perfectly still when the red lamps are active. When they go dark, it is already behind the glass.”',
+  schematic:'FACILITY SCHEMATIC — SECURITY REVISION\nEmergency extraction is routed through the east loading lock. Manual power restoration is recommended before opening the outer shutter.'
+ },
+ 'THE PATIENT':{
+  keycard:'QUARANTINE ACCESS / PATIENT ZERO\nThe patient was admitted under a blank identity. The access card was returned from inside a room that had no door.',
+  report:'MEDICAL INCIDENT — WARD 03\nHeart rate absent. Movement recorded. The subject reacts to light and approaches voices that use its former name.',
+  recording:'DOCTOR’S FINAL DICTATION\n“We sedated it twice. It woke before the needle reached the tray. Do not let it touch the glass. The glass is the only thing it respects.”',
+  schematic:'QUARANTINE ROUTING NOTE\nPower cells feed the isolation locks. Extraction control is downstream of the quarantine breaker.'
+ },
+ 'THE LISTENER':{
+  keycard:'SIGNAL ROOM ACCESS\nThe card reader logs entries during total power loss. Every entry is marked with the same audio waveform.',
+  report:'ACOUSTIC SURVEY — LOWER LEVEL\nThe creature follows repeated sounds. It can distinguish sprinting footsteps from a slow walk, but it cannot locate a silent operator.',
+  recording:'EMERGENCY FREQUENCY — TRANSCRIPT\n“Do not answer the radio. The voice is not coming through the speaker. It is learning where you are from the sound of your reply.”',
+  schematic:'ANTENNA MAINTENANCE MAP\nThe emergency exit relay shares a circuit with the lower antenna array. Restore auxiliary power before attempting extraction.'
+ },
+ 'THE SPECIMEN':{
+  keycard:'CRYO ACCESS CARD\nSpecimen temperature is stable only while the coolant pumps are active. Frost on the inner glass is not condensation.',
+  report:'CRYOGENIC INCIDENT — SHIFT 6\nThe specimen is attracted to heat signatures. Personnel were instructed to crouch and keep distance from the vents.',
+  recording:'LAB AUDIO — LAST TECHNICIAN\n“It is growing through the seams. The frost is moving against the airflow. If the alarms stop, do not assume the room is safe.”',
+  schematic:'COOLANT / POWER ROUTING\nThe auxiliary breaker controls both the coolant circulation and the emergency exit release.'
+ },
+ 'THE PROTOTYPE':{
+  keycard:'PROTOTYPE PROGRAM / CLEARANCE 9\nThe prototype was designed to adapt to pursuit patterns. Repeating the same escape route increases its interception rate.',
+  report:'AUTONOMOUS CONTAINMENT TEST\nThe subject learns from light, sound and repeated movement. Test personnel were ordered to change routes after every encounter.',
+  recording:'SYSTEMS ENGINEER — CORRUPTED AUDIO\n“It knows the drill now. It waits at the obvious doors. Stop following the evacuation arrows.”',
+  schematic:'CONTAINMENT OVERRIDE PLAN\nPower cells energize the manual override. The outer door will remain sealed until the emergency relay is restored.'
+ },
+ 'THE CURATOR':{
+  keycard:'ARCHIVE ACCESS / RESTRICTED\nThe archive catalogue lists every employee who entered the facility. The newest file contains a photograph taken from behind the reader.',
+  report:'RECORDS DIVISION — UNFILED REPORT\nThe Curator rearranges the shelves after every alarm. Missing files have been found inside lockers that were searched moments earlier.',
+  recording:'ARCHIVE VOICE LOG\n“Do not read your own file. It changes while you look at it. If the shelves begin to move, leave the aisle and do not follow the footsteps.”',
+  schematic:'ARCHIVE SERVICE ROUTE\nThe lower records wing uses an independent emergency circuit. Restore the main relay to release the extraction lock.'
+ }
+};
 function refreshInventory(){const run=state.localRun;if(!run)return;$('inventorySummary').textContent=run.inventory.length+' recovered item(s) · '+run.evidence.length+' document(s)/recording(s)';$('inventoryList').innerHTML=run.inventory.map(id=>{const item=EVIDENCE_ITEMS.find(x=>x.id===id);return item?'<div class="inventoryItem"><span><b>'+item.name+'</b><br><span class="muted">'+item.kind+'</span></span><button data-use="'+item.id+'">'+(item.id==='medkit'?'USE':'INSPECT')+'</button></div>':'';}).join('')||'<p class="muted">Your inventory is empty. Search the facility for supplies and evidence.</p>';$('journalList').innerHTML=run.evidence.map(id=>{const item=EVIDENCE_ITEMS.find(x=>x.id===id);return item?'<div class="inventoryItem"><span><b>'+item.name+'</b><br><span class="muted">'+item.kind+'</span></span><button data-read="'+item.id+'">READ / PLAY</button></div>':'';}).join('')||'<p class="muted">No documents or recordings recovered yet.</p>';}
-function showEvidence(id){const item=EVIDENCE_ITEMS.find(x=>x.id===id);if(!item)return;$('inspectTitle').textContent=item.name;$('inspectBody').textContent=item.text;$('inspectPanel').style.display='grid';}
+function showEvidence(id){const item=EVIDENCE_ITEMS.find(x=>x.id===id);if(!item)return;const threat=state.localRun?.scenario?.threat,story=STORY_RECORDS[threat]?.[id];$('inspectTitle').textContent=item.name;$('inspectBody').textContent=story||item.text;$('inspectPanel').style.display='grid';}
 function closePanels(){for(const id of ['inventoryPanel','journalPanel','inspectPanel','pausePanel'])$(id).style.display='none';state.paused=false;if(state.screen==='game'&&!state.hidden)$('gameCanvas').requestPointerLock?.();}
 function openPause(){if(state.screen!=='game'||state.mode!=='solo'||state.paused)return;state.paused=true;state.keys={};document.exitPointerLock?.();$('pausePanel').style.display='grid';}
 function damagePlayer(amount,reason){const run=state.localRun;if(!run||state.dead||state.paused)return;run.health=Math.max(0,run.health-amount);state.health=run.health;state.injury=Math.min(1,state.injury+.35);state.cameraShake=Math.max(state.cameraShake,.28);$('healthFill').style.width=run.health+'%';$('damageVignette').classList.add('hit');setTimeout(()=>$('damageVignette').classList.remove('hit'),170);showToast(reason+' · HEALTH '+Math.ceil(run.health)+'%',1400);playTone(70,.22,'sawtooth',.12);if(amount>=28)jumpscare();if(run.health<=0)finishSolo(false,'YOUR INJURIES WERE FATAL. THE FACILITY CLAIMED ANOTHER OPERATOR.');}
