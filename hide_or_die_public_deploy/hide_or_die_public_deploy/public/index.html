@@ -18,6 +18,19 @@
 @media(max-width:420px){.logo{font-size:74px}.panel{padding:17px}.hudKicker{font-size:7px}.hudValue{font-size:16px}.hudTop{gap:5px}.hudPlate{padding:7px}.hudRight{width:106px}.mapFrame{width:106px;height:86px}.meterBox{min-width:75px;padding:7px}.meterLabel{font-size:7px}}
 
 #healthFill{background:#cf4a50;width:100%}.gamePanel{position:fixed;z-index:20;inset:0;display:none;place-items:center;padding:18px;background:#020508eF;backdrop-filter:blur(10px);pointer-events:auto}.gamePanelCard{width:min(620px,94vw);max-height:82vh;overflow:auto;background:linear-gradient(145deg,#151b21,#080c10);border:1px solid #ffffff35;padding:22px;box-shadow:0 25px 90px #000}.gamePanelCard h2{font:800 32px 'Barlow Condensed';letter-spacing:2px;margin:0 0 12px;color:#f4eee4}.gamePanelCard p,.gamePanelCard li{font-size:11px;line-height:1.8;color:#b6c0c5}.panelActions{display:flex;gap:9px;flex-wrap:wrap;margin-top:16px}.panelActions button{flex:1}.inventoryList{display:grid;gap:8px}.inventoryItem{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px;background:#111a20;border:1px solid #ffffff20;font-size:10px}.inventoryItem button{padding:7px 10px;font-size:9px}.damageVignette{position:fixed;inset:0;z-index:7;pointer-events:none;opacity:0;background:radial-gradient(ellipse,transparent 35%,#a40018aa 100%);transition:opacity .12s}.damageVignette.hit{opacity:1}.evidenceText{white-space:pre-wrap;color:#d5d2c9;font-size:12px;line-height:1.9;background:#080d11;padding:15px;border-left:2px solid var(--gold)}.settingsRow{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0;font-size:10px;color:#aeb9bf}.settingsRow input{width:100%}.pauseHint{font-size:9px;color:#8d9aa1;letter-spacing:1px;margin-top:8px}
+
+/* Mobile-first touch controls */
+#mobileControls{display:none;position:fixed;inset:0;z-index:7;pointer-events:none;touch-action:none;user-select:none;-webkit-user-select:none}
+#mobileStick{position:absolute;left:max(18px,env(safe-area-inset-left));bottom:max(24px,env(safe-area-inset-bottom));width:138px;height:138px;border:2px solid #ffffff55;border-radius:50%;background:#07101699;box-shadow:0 5px 25px #0009;pointer-events:auto;touch-action:none}
+#mobileStick:after{content:'MOVE';position:absolute;left:0;right:0;bottom:8px;text-align:center;font:700 9px 'IBM Plex Mono';letter-spacing:2px;color:#dce4e8aa}
+#mobileKnob{position:absolute;left:39px;top:39px;width:56px;height:56px;border:2px solid #ffffffa0;border-radius:50%;background:#b8c7d055;box-shadow:inset 0 0 18px #fff2;pointer-events:none}
+.mobileActions{position:absolute;right:max(14px,env(safe-area-inset-right));bottom:max(20px,env(safe-area-inset-bottom));display:grid;grid-template-columns:repeat(2,58px);gap:9px;pointer-events:auto}
+.mobileActions button{width:58px;height:58px;border-radius:50%;padding:0;border:1px solid #ffffff70;background:#101a20d9;color:#fff;font:700 9px 'IBM Plex Mono';letter-spacing:.3px;box-shadow:0 4px 14px #0009;touch-action:none}
+.mobileActions button:active,.mobileActions button.active{background:#8e1d28;border-color:#ff8791}
+#mobileLookHint{position:absolute;right:18px;top:48%;font:8px 'IBM Plex Mono';letter-spacing:1px;color:#ffffff65;pointer-events:none;writing-mode:vertical-rl}
+@media(pointer:coarse),(max-width:800px){#mobileControls{display:block}#hud .objectivePanel{bottom:auto;top:84px;max-width:42vw;min-width:120px;padding:7px}#hud .hudRight{top:10px}#hud .hudBottom{bottom:12px}#hud .noVoice{display:none}#hud .crosshair{opacity:.6}}
+@media(max-width:520px){#mobileStick{width:122px;height:122px}#mobileKnob{left:32px;top:32px;width:54px;height:54px}.mobileActions{grid-template-columns:repeat(2,52px);gap:7px}.mobileActions button{width:52px;height:52px;font-size:8px}#hud .hudTop .hudPlate{padding:5px 7px}#hud .hudValue{font-size:14px}#hud .objectivePanel{top:76px;left:46%;max-width:40vw}#hud .hudRight{right:6px;width:90px}#hud .mapFrame{width:90px;height:70px;padding:4px}#hud .threatMeter{padding:5px;font-size:7px}#hud .threatMeter strong{font-size:13px}#hud .hudBottom{gap:4px;left:6px;bottom:8px}#hud .meterBox{min-width:60px;padding:5px}#hud .meterLabel{font-size:6px}#mobileLookHint{display:none}}
+@media(orientation:landscape) and (max-height:500px){#mobileStick{width:108px;height:108px;bottom:12px}#mobileKnob{left:25px;top:25px;width:54px;height:54px}.mobileActions{bottom:10px;grid-template-columns:repeat(3,48px)}.mobileActions button{width:48px;height:48px}#hud .objectivePanel{top:8px;bottom:auto}}
 </style>
 </head>
 <body>
@@ -59,6 +72,20 @@
  <div class="hudRight"><div class="mapFrame"><canvas id="miniMap" width="240" height="190"></canvas></div><div class="threatMeter">THREAT STATUS<strong id="threatLabel">DORMANT</strong></div></div>
  <div class="hudBottom"><div class="meterBox"><div class="meterLabel">HEALTH</div><div class="meterTrack"><div id="healthFill" class="meterFill"></div></div></div><div class="meterBox"><div class="meterLabel">STAMINA</div><div class="meterTrack"><div id="staminaFill" class="meterFill"></div></div></div><div class="meterBox"><div class="meterLabel">FLASHLIGHT CELL</div><div class="meterTrack"><div id="batteryFill" class="meterFill" style="background:#d5ae61"></div></div></div></div>
  <div class="crosshair"></div><div class="interactionHint" id="interactionHint">[ E ] INTERACT</div><div class="controlsHint">WASD MOVE · MOUSE LOOK · SHIFT SPRINT · CTRL CROUCH · F FLASHLIGHT · H HIDE · E INTERACT · TAB INVENTORY · J JOURNAL · ESC PAUSE</div><div class="noVoice">🔇 VOICE COMMS DISABLED / MIC NOT ACCESSED</div>
+</div>
+<div id="mobileControls" aria-label="Touch controls">
+ <div id="mobileStick" aria-label="Movement joystick"><div id="mobileKnob"></div></div>
+ <div id="mobileLookHint">DRAG RIGHT SIDE TO LOOK</div>
+ <div class="mobileActions">
+  <button id="touchSprint" aria-label="Hold to sprint">RUN</button>
+  <button id="touchCrouch" aria-label="Toggle crouch">CROUCH</button>
+  <button id="touchInteract" aria-label="Interact">USE</button>
+  <button id="touchFlash" aria-label="Toggle flashlight">LIGHT</button>
+  <button id="touchHide" aria-label="Hide or leave hiding">HIDE</button>
+  <button id="touchInventory" aria-label="Open inventory">BAG</button>
+  <button id="touchJournal" aria-label="Open journal">LOG</button>
+  <button id="touchPause" aria-label="Pause game">PAUSE</button>
+ </div>
 </div>
 <div id="hiddenOverlay">YOU ARE INSIDE A LOCKER<br><span style="color:#65717a;font-size:9px">HOLD YOUR BREATH · PRESS H TO EXIT</span></div>
 <div id="scareOverlay">RUN</div>
@@ -162,11 +189,36 @@ function saveAvatar(){try{localStorage.setItem('hod-avatar-v2',JSON.stringify(st
 function loadAvatar(){try{const saved=JSON.parse(localStorage.getItem('hod-avatar-v2')||'{}');state.avatar={...state.avatar,...saved};}catch{}}
 function bindAvatar(){const map={skinColor:'skin',hairColor:'hair',outfitColor:'outfit',pantsColor:'pants',hairStyle:'hairStyle',outfitStyle:'outfitStyle',accessory:'accessory'};for(const [id,key] of Object.entries(map)){const input=$(id);input.value=state.avatar[key];const change=()=>{state.avatar[key]=input.value;saveAvatar();};input.addEventListener('input',change);input.addEventListener('change',change);}updateAvatarPreview();$('playerName').addEventListener('input',updateAvatarPreview);}
 
+function bindMobileControls(){
+ const stick=$('mobileStick'),knob=$('mobileKnob'),canvas=$('gameCanvas');
+ if(!stick||stick.dataset.bound)return;stick.dataset.bound='1';
+ let stickPointer=null,lookPointer=null,lastX=0,lastY=0,crouchOn=false;
+ const clearStick=()=>{state.keys.KeyW=state.keys.KeyA=state.keys.KeyS=state.keys.KeyD=false;knob.style.transform='translate(0px,0px)';};
+ stick.addEventListener('pointerdown',event=>{if(state.screen!=='game'||state.paused)return;stickPointer=event.pointerId;stick.setPointerCapture(event.pointerId);moveStick(event);});
+ function moveStick(event){const rect=stick.getBoundingClientRect(),cx=rect.left+rect.width/2,cy=rect.top+rect.height/2;let dx=event.clientX-cx,dy=event.clientY-cy;const max=rect.width*.34,len=Math.hypot(dx,dy);if(len>max){dx=dx/len*max;dy=dy/len*max;}knob.style.transform=`translate(${dx}px,${dy}px)`;state.keys.KeyA=dx< -12;state.keys.KeyD=dx>12;state.keys.KeyW=dy< -12;state.keys.KeyS=dy>12;}
+ stick.addEventListener('pointermove',event=>{if(event.pointerId===stickPointer)moveStick(event);});
+ const releaseStick=event=>{if(event.pointerId===stickPointer){stickPointer=null;clearStick();}};
+ stick.addEventListener('pointerup',releaseStick);stick.addEventListener('pointercancel',releaseStick);stick.addEventListener('lostpointercapture',()=>{stickPointer=null;clearStick();});
+ canvas.addEventListener('pointerdown',event=>{if(event.pointerType!=='touch'||state.screen!=='game'||state.paused||event.clientX<innerWidth*.38)return;lookPointer=event.pointerId;lastX=event.clientX;lastY=event.clientY;canvas.setPointerCapture(event.pointerId);});
+ canvas.addEventListener('pointermove',event=>{if(event.pointerId!==lookPointer)return;const dx=event.clientX-lastX,dy=event.clientY-lastY;lastX=event.clientX;lastY=event.clientY;state.yaw-=dx*.006;state.pitch=Math.max(-1.25,Math.min(1.25,state.pitch-dy*.005));});
+ const releaseLook=event=>{if(event.pointerId===lookPointer)lookPointer=null;};canvas.addEventListener('pointerup',releaseLook);canvas.addEventListener('pointercancel',releaseLook);
+ const bind=(id,fn)=>$(id).addEventListener('click',event=>{event.preventDefault();if(state.screen==='game'&&!state.dead)fn();});
+ const hold=(id,key)=>{const button=$(id);button.addEventListener('pointerdown',event=>{event.preventDefault();button.classList.add('active');state.keys[key]=true;});const up=event=>{event.preventDefault();button.classList.remove('active');state.keys[key]=false;};button.addEventListener('pointerup',up);button.addEventListener('pointercancel',up);button.addEventListener('lostpointercapture',()=>{button.classList.remove('active');state.keys[key]=false;});};
+ hold('touchSprint','ShiftLeft');
+ bind('touchCrouch',()=>{crouchOn=!crouchOn;state.keys.ControlLeft=crouchOn;$('touchCrouch').classList.toggle('active',crouchOn);});
+ bind('touchInteract',()=>interact());
+ bind('touchFlash',()=>toggleFlashlight());
+ bind('touchHide',()=>toggleHide());
+ bind('touchInventory',()=>{$('inventoryPanel').style.display=$('inventoryPanel').style.display==='grid'?'none':'grid';state.paused=$('inventoryPanel').style.display==='grid';if(state.paused)document.exitPointerLock?.();});
+ bind('touchJournal',()=>{$('journalPanel').style.display=$('journalPanel').style.display==='grid'?'none':'grid';state.paused=$('journalPanel').style.display==='grid';if(state.paused)document.exitPointerLock?.();});
+ bind('touchPause',()=>{if(state.paused)closePanels();else openPause();});
+}
 function init3D(){
   if(state.renderer)return;
   const canvas=$('gameCanvas');
+  bindMobileControls();
   state.renderer=new THREE.WebGLRenderer({canvas,antialias:true,powerPreference:'high-performance'});
-  state.renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.65));state.renderer.shadowMap.enabled=true;state.renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+  const mobileDevice=matchMedia('(pointer:coarse),(max-width:800px)').matches;state.renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,mobileDevice?1.2:1.65));state.renderer.shadowMap.enabled=true;state.renderer.shadowMap.type=THREE.PCFSoftShadowMap;
   state.renderer.setSize(window.innerWidth,window.innerHeight,false);
   state.renderer.outputColorSpace=THREE.SRGBColorSpace;
   state.renderer.toneMapping=THREE.ACESFilmicToneMapping;
@@ -179,7 +231,7 @@ function init3D(){
   state.scene.add(state.camera);
   const hemi=new THREE.HemisphereLight(0x93a8b8,0x17110d,0.34);state.scene.add(hemi);
   const ambient=new THREE.AmbientLight(0x26343d,0.24);state.scene.add(ambient);
-  const fill=new THREE.DirectionalLight(0x5e7185,0.35);fill.position.set(-12,18,4);fill.castShadow=true;fill.shadow.mapSize.set(512,512);fill.shadow.camera.near=.5;fill.shadow.camera.far=48;state.scene.add(fill);
+  const fill=new THREE.DirectionalLight(0x5e7185,0.35);fill.position.set(-12,18,4);fill.castShadow=true;fill.shadow.mapSize.set(mobileDevice?256:512,mobileDevice?256:512);fill.shadow.camera.near=.5;fill.shadow.camera.far=48;state.scene.add(fill);
   buildFacility();buildViewModel();buildMonster();
   state.clock=new THREE.Clock();
   window.addEventListener('resize',resize3D);
