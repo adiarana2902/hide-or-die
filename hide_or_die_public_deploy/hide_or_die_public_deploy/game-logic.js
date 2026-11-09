@@ -1,5 +1,5 @@
 'use strict';
-const GRID_X=Object.freeze([-18,-6,6,18]);
+const GRID_X=Object.freeze([-18,-6,6,18,30]);
 const GRID_Z=Object.freeze([-12,0,12]);
 const ROOM_HALF=4.5;
 const CORRIDOR_HALF=1.55;
@@ -12,12 +12,14 @@ function addRoomSolids(x,z,type){
  if(type==='storage'||type==='loading')for(let i=0;i<3;i++)PLAYER_SOLIDS.push({x:x-2.7+i*1.65,z:z+.8,w:1.1,h:1.1});
  if(type==='generator')PLAYER_SOLIDS.push({x:x+.8,z:z+.8,w:2.4,h:2.1});
  if(type==='reactor')PLAYER_CIRCLES.push({x,z,r:1.35});
- if(type==='isolation')PLAYER_SOLIDS.push({x:x+1.8,z:z-.9,w:1.5,h:1.5});
+ if(type==='isolation'||type==='containment')PLAYER_SOLIDS.push({x:x+1.8,z:z-.9,w:1.5,h:1.5});
+ if(type==='archive')for(let i=0;i<3;i++)PLAYER_SOLIDS.push({x:x-2.65+i*2.55,z:z+.75,w:.72,h:2.2});
+ if(type==='maintenance')PLAYER_SOLIDS.push({x:x+1.25,z:z+.7,w:2.4,h:1.6});
 }
-const ROOM_TYPES=[['cafeteria','security','medical','office'],['storage','hub','lab','isolation'],['loading','generator','reactor','exit']];
+const ROOM_TYPES=[['cafeteria','security','medical','office','archive'],['storage','hub','lab','isolation','maintenance'],['loading','generator','reactor','exit','containment']];
 for(let iz=0;iz<GRID_Z.length;iz++)for(let ix=0;ix<GRID_X.length;ix++)addRoomSolids(GRID_X[ix],GRID_Z[iz],ROOM_TYPES[iz][ix]);
 function isWalkable(x,z){
- if(!Number.isFinite(x)||!Number.isFinite(z)||Math.abs(x)>23||Math.abs(z)>17)return false;
+ if(!Number.isFinite(x)||!Number.isFinite(z)||Math.abs(x)>35||Math.abs(z)>17)return false;
  const room=GRID_X.some(cx=>GRID_Z.some(cz=>Math.abs(x-cx)<=ROOM_HALF&&Math.abs(z-cz)<=ROOM_HALF));
  const horizontal=GRID_Z.some(cz=>Math.abs(z-cz)<=CORRIDOR_HALF)&&GRID_X.slice(0,-1).some((cx,i)=>x>=cx+ROOM_HALF-.05&&x<=GRID_X[i+1]-ROOM_HALF+.05);
  const vertical=GRID_X.some(cx=>Math.abs(x-cx)<=CORRIDOR_HALF)&&GRID_Z.slice(0,-1).some((cz,i)=>z>=cz+ROOM_HALF-.05&&z<=GRID_Z[i+1]-ROOM_HALF+.05);
