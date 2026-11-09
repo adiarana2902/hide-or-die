@@ -292,6 +292,15 @@ function buildFacility(){
   const redLamp=new THREE.PointLight(0xff2532,2.0,14,2);redLamp.position.set(18,2.8,12);state.scene.add(redLamp);redLamp.userData.baseIntensity=redLamp.intensity;state.environmentLights.push(redLamp);
   // Cables above the corridors.
   for(const z of GRID_Z){for(let i=0;i<GRID_X.length-1;i++){const x=(GRID_X[i]+GRID_X[i+1])/2;const cable=addBox(floorGroup,3,.07,.07,x,3.62,z,material(0x111719,.7,.5));}}
+  // Fine suspended dust catches the flashlight beam and makes the facility feel inhabited.
+  const dustPositions=new Float32Array(420*3);
+  for(let i=0;i<420;i++){const room=ROOMS[Math.floor(Math.random()*ROOMS.length)];dustPositions[i*3]=room.x+(Math.random()-.5)*8;dustPositions[i*3+1]=.25+Math.random()*3.1;dustPositions[i*3+2]=room.z+(Math.random()-.5)*8;}
+  const dustGeometry=new THREE.BufferGeometry();dustGeometry.setAttribute('position',new THREE.BufferAttribute(dustPositions,3));
+  const dustMaterial=new THREE.PointsMaterial({color:0xb9c6c7,size:.035,transparent:true,opacity:.22,depthWrite:false,sizeAttenuation:true});
+  state.dustField=new THREE.Points(dustGeometry,dustMaterial);state.scene.add(state.dustField);
+  // Scuffed, oil-darkened floor patches break up the repeating industrial floor.
+  const stainMat=new THREE.MeshStandardMaterial({color:0x111719,roughness:.22,metalness:.38,transparent:true,opacity:.34,depthWrite:false});
+  for(const room of ROOMS){for(let i=0;i<2;i++){const stain=new THREE.Mesh(new THREE.CircleGeometry(.35+Math.random()*.65,12),stainMat);stain.rotation.x=-Math.PI/2;stain.rotation.z=Math.random()*Math.PI;stain.position.set(room.x+(Math.random()-.5)*6,.006,room.z+(Math.random()-.5)*6);stain.scale.y=.35+Math.random()*.7;floorGroup.add(stain);}}
   state.scene.userData.staticFacility=floorGroup;
 }
 function addRoomProps(room,parent){
@@ -336,6 +345,32 @@ function buildMonster(){
   const aura=new THREE.PointLight(0xc11928,1.2,6,2);aura.position.set(0,1.8,0);root.add(aura);
   root.visible=false;
 }
+function applyMonsterVariant(scenario){
+  if(!state.monster||!scenario)return;
+  const styles={
+    'THE WARDEN':{skin:0x202729,wound:0x651d24,eye:0xff2638,scale:[1.12,1.08,1.08],aura:0xa31d2a,feature:'armor'},
+    'THE PATIENT':{skin:0x8a9290,wound:0x4a252b,eye:0xd8ffcf,scale:[.92,1.12,.92],aura:0x7da69a,feature:'growth'},
+    'THE LISTENER':{skin:0x171d25,wound:0x3e263d,eye:0x9b68ff,scale:[.82,1.28,.82],aura:0x593d9c,feature:'antenna'},
+    'THE SPECIMEN':{skin:0x53666a,wound:0x8ab6b9,eye:0x9af5ff,scale:[1,1.02,1],aura:0x42b4c6,feature:'crystal'},
+    'THE PROTOTYPE':{skin:0x292e33,wound:0x78313b,eye:0xffa13d,scale:[1.2,1.02,1.14],aura:0xc45b20,feature:'spines'},
+    'THE CURATOR':{skin:0x111416,wound:0x51212a,eye:0xffd58a,scale:[.96,1.18,1.02],aura:0x9a713d,feature:'crown'}
+  };
+  const cfg=styles[scenario.threat]||styles['THE WARDEN'],root=state.monster;
+  root.scale.set(...cfg.scale);
+  root.userData.variantGroup?.parent?.remove(root.userData.variantGroup);
+  const variant=new THREE.Group();root.add(variant);root.userData.variantGroup=variant;
+  root.traverse(o=>{if(!o.isMesh||o.userData.variantDetail)return;const old=o.material;if(old&&old.color){const m=old.clone();if(old===root.userData.parts?.torso?.material||old===root.userData.parts?.head?.material||old===root.userData.parts?.arms?.[0]?.material)m.color.setHex(cfg.skin);else if(old===root.userData.parts?.jaw?.material)m.color.setHex(cfg.wound);else if(old.emissive&&old.emissive.getHex()===0xff0018){m.color.setHex(cfg.eye);m.emissive.setHex(cfg.eye);}o.material=m;}});
+  const detailMat=material(cfg.wound,.58,.28,{emissive:cfg.aura,emissiveIntensity:.32});
+  const addSpike=(x,y,z,h,r,tilt=0)=>{const mesh=new THREE.Mesh(new THREE.ConeGeometry(r,h,6),detailMat);mesh.position.set(x,y,z);mesh.rotation.z=tilt;mesh.userData.variantDetail=true;variant.add(mesh);mesh.castShadow=true;};
+  if(cfg.feature==='armor'){for(const side of [-1,1]){const plate=new THREE.Mesh(new THREE.BoxGeometry(.48,.5,.28),material(0x303a40,.42,.72));plate.position.set(side*.49,1.72,-.02);plate.rotation.z=side*-.18;variant.add(plate);}}
+  if(cfg.feature==='growth'){for(let i=0;i<5;i++)addSpike(Math.sin(i*2.4)*.36,1.65+(i%2)*.36,.12, .5,.16,Math.sin(i)*.4);}
+  if(cfg.feature==='antenna'){const stalk=new THREE.Mesh(new THREE.CylinderGeometry(.035,.07,.9,7),detailMat);stalk.position.set(0,2.85,.02);stalk.rotation.z=-.16;variant.add(stalk);for(const side of [-1,1])addSpike(side*.32,1.65,.12,.8,.13,side*.48);}
+  if(cfg.feature==='crystal'){for(let i=0;i<7;i++)addSpike(Math.sin(i*2.1)*.42,1.45+(i%3)*.26,.18,.7,.17,Math.sin(i*1.7)*.45);}
+  if(cfg.feature==='spines'){for(let i=0;i<6;i++)addSpike(Math.sin(i*1.8)*.48,1.15+(i%3)*.42,.16,.68,.18,Math.sin(i)*.55);}
+  if(cfg.feature==='crown'){for(let i=0;i<5;i++)addSpike((i-2)*.16,2.62,.02,.72,.11,(i-2)*.22);}
+  const aura=root.children.find(o=>o.isPointLight);if(aura){aura.color.setHex(cfg.aura);aura.intensity=1.8;}
+  root.userData.variantName=scenario.threat;
+}
 function createObjectiveMesh(item,index){
   const group=new THREE.Group();group.position.set(item.x,.8,item.z);
   const base=new THREE.Mesh(new THREE.CylinderGeometry(.38,.42,.13,12),material(0x282e31,.5,.55));base.position.y=-.2;group.add(base);
@@ -358,7 +393,7 @@ function updateWorld(world){
 }
 function startWorld(mode,world,players,scenario){
   init3D();state.keys={};state.dead=false;state.hidden=false;state.running=false;state.crouched=false;state.stamina=100;state.battery=100;state.flashlightOn=true;state.mode=mode;state.world=world;state.hidden=false;state.dead=false;state.stamina=100;state.battery=100;state.flashlightOn=true;state.localRun=mode==='solo'?{scenario,found:0,enemy:{x:world.monster.x,z:world.monster.z},startedAt:Date.now(),graceUntil:Date.now()+20000,lastKnown:null,searchUntil:0,noiseUntil:0,patrolIndex:0,lastScare:Date.now()+18000}:null;
-  const self=(players||[]).find(player=>player.id===socket.id);state.localPos=self?{x:self.x,z:self.z}:(mode==='solo'?{x:-6,z:2.5}:{x:-8.2,z:1.3});state.yaw=mode==='solo'?0:Math.PI/2;state.pitch=0;state.keys={};state.monster.visible=true;state.monster.position.set(world.monster.x,0,world.monster.z);state.monsterTarget={x:world.monster.x,z:world.monster.z,state:'patrol'};state.lastScare=0;state.lastSync=0;
+  const self=(players||[]).find(player=>player.id===socket.id);state.localPos=self?{x:self.x,z:self.z}:(mode==='solo'?{x:-6,z:2.5}:{x:-8.2,z:1.3});state.yaw=mode==='solo'?0:Math.PI/2;state.pitch=0;state.keys={};state.monster.visible=true;state.monster.position.set(world.monster.x,0,world.monster.z);if(mode==='solo')applyMonsterVariant(scenario);else state.monster.scale.set(1,1,1);state.monsterTarget={x:world.monster.x,z:world.monster.z,state:'patrol'};state.lastScare=0;state.lastSync=0;
   clearObjectiveMeshes();world.objectives.forEach((item,index)=>{if(!item.collected)createObjectiveMesh(item,index);});
   for(const mesh of state.remotePlayers.values())state.scene.remove(mesh);state.remotePlayers.clear();for(const player of (players||[])){if(player.id!==socket.id)addRemotePlayer(player);}
   state.camera.position.set(state.localPos.x,1.68,state.localPos.z);state.camera.rotation.order='YXZ';state.camera.rotation.set(0,0,0);state.camera.rotation.y=state.yaw;
@@ -475,6 +510,7 @@ function animate(){
   requestAnimationFrame(animate);if(!state.renderer||state.screen!=='game')return;const dt=Math.min(.05,state.clock.getDelta());state.frame++;
   updateMovement(dt);if(state.mode==='solo')updateSolo(dt);else if(state.world?.monster){const m=state.world.monster;state.monsterTarget={x:m.x,z:m.z,state:m.state};}
   if(state.mode==='multi'&&state.monsterTarget){state.monster.position.x=THREE.MathUtils.damp(state.monster.position.x,state.monsterTarget.x,8,dt);state.monster.position.z=THREE.MathUtils.damp(state.monster.position.z,state.monsterTarget.z,8,dt);state.monster.rotation.y=Math.atan2(state.localPos.x-state.monster.position.x,state.localPos.z-state.monster.position.z);}
+  if(state.dustField)state.dustField.rotation.y+=dt*.0015;
   for(const mesh of state.remotePlayers.values()){const target=mesh.userData.target;mesh.position.x=THREE.MathUtils.damp(mesh.position.x,target.x,9,dt);mesh.position.z=THREE.MathUtils.damp(mesh.position.z,target.z,9,dt);}
   for(const [id,mesh] of state.objectiveMeshes){mesh.position.y=.8+Math.sin(Date.now()*.003+id.length)*.09;mesh.rotation.y+=dt*.55;}
   if(state.paused){state.renderer.render(state.scene,state.camera);return;}if(state.localRun){const flicker=Date.now()<(state.localRun.flickerUntil||0);for(const lamp of state.environmentLights){const base=(lamp.userData.baseIntensity||1)*(state.localRun.powerOn?1.55:.28);lamp.intensity=base*(flicker&&Math.random()<.58?.035:1);}}if(state.viewModel){const interacting=Date.now()<(state.viewModel.userData.interactUntil||0),hidden=state.hidden;state.viewModel.rotation.x=THREE.MathUtils.damp(state.viewModel.rotation.x,hidden?.42:interacting?-.22:0,15,dt);state.viewModel.position.y=THREE.MathUtils.damp(state.viewModel.position.y,hidden?-1.05:state.crouched?-.4:-.34,12,dt);state.viewModel.position.z=THREE.MathUtils.damp(state.viewModel.position.z,hidden?-.25:interacting?-.7:-.62,15,dt);}if(state.hidden)state.camera.position.y=THREE.MathUtils.damp(state.camera.position.y,.78,10,dt);if(state.flashlightOn&&state.battery>0){state.battery=Math.max(0,state.battery-dt*.12);state.flashlight.intensity=42*(state.battery/100);$('batteryFill').style.width=state.battery+'%';if(state.battery===0){state.flashlight.intensity=0;state.flashlightOn=false;showToast('FLASHLIGHT BATTERY EMPTY',1800);}}
