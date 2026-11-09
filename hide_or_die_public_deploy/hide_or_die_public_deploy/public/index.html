@@ -110,6 +110,7 @@ if(new URLSearchParams(location.search).has('e2e')){
   window.__HOD_E2E__={
     snapshot:()=>({screen:state.screen,mode:state.mode,position:{...state.localPos},yaw:state.yaw,hidden:state.hidden,dead:state.dead,paused:state.paused,health:state.localRun?.health??100,powerOn:state.localRun?.powerOn||false,securityUnlocked:state.localRun?.doors?.security||false,doorClear:isPlayerClear(-1.5,-12,.34),inventory:[...(state.localRun?.inventory||[])],evidence:[...(state.localRun?.evidence||[])],pickups:(state.localRun?.pickups||[]).map(p=>({id:p.id,x:p.x,z:p.z,found:p.found})),enemy:state.localRun?{...state.localRun.enemy}:null,found:state.localRun?.found||0,scenario:state.localRun?.scenario.title||null,objectives:state.world?.objectives?.map(o=>({...o}))||[],rooms:ROOMS.map(r=>({name:r.name,x:r.x,z:r.z})),hideSpots:state.hideSpots.map(p=>({...p}))}),
     setPosition:(x,z)=>{state.localPos={x,z};if(state.camera){state.camera.position.x=x;state.camera.position.z=z;}},
+    setYaw:yaw=>{state.yaw=yaw;state.pitch=0;if(state.camera){state.camera.rotation.order='YXZ';state.camera.rotation.y=yaw;state.camera.rotation.x=0;}},
     clearAt:(x,z)=>isPlayerClear(x,z,.34),interact:()=>interact(),toggleHide:()=>toggleHide(),
     forceDeath:()=>finishSolo(false,'E2E DEATH CHECK'),damage:(amount)=>damagePlayer(amount,'E2E DAMAGE'),openPause:()=>openPause(),closePanels:()=>closePanels()
   };
