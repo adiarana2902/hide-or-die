@@ -71,38 +71,37 @@ const { spawn } = require('node:child_process');
     assert.equal(inventoryState.health,100,'Using a recovered medkit should restore health');
     assert.ok(!inventoryState.inventory.includes('medkit'),'A used medkit should be consumed');
 
-    // Exercise all four real keyboard directions relative to the camera heading.
+    // Exercise real keyboard input in four unobstructed lanes with a deterministic camera heading.
     await page.locator('#gameCanvas').click({force:true});
-    // Keep keyboard QA focused on the canvas without pointer-lock mouse deltas
-    // changing the camera yaw while the four movement directions are measured.
     await page.evaluate(()=>document.exitPointerLock?.());
     await page.waitForFunction(()=>document.pointerLockElement===null);
-    const movementStart=await page.evaluate(()=>{
-      const api=window.__HOD_E2E__;
-      for(let radius=0;radius<=8;radius+=.5){
-        for(let dx=-radius;dx<=radius;dx+=.5) for(let dz=-radius;dz<=radius;dz+=.5){
-          const x=-6+dx,z=2.5+dz;
-          // The player needs an unobstructed lane long enough for the full
-          // keyboard hold, not merely one clear step beside the spawn point.
-          if(api.clearAt(x,z)&&api.clearAt(x+1.5,z)&&api.clearAt(x-1.5,z)&&api.clearAt(x,z+1.5)&&api.clearAt(x,z-1.5))return{x,z};
-        }
-      }
-      return null;
-    });
-    assert.ok(movementStart,'Could not find open floor for four-direction movement checks');
     const directions=[
-      {key:'w',forward:1,side:0,label:'W forward'},
-      {key:'s',forward:-1,side:0,label:'S backward'},
-      {key:'a',forward:0,side:-1,label:'A left'},
-      {key:'d',forward:0,side:1,label:'D right'}
+      {key:'w',forward:1,side:0,label:'W forward',dx:0,dz:-1},
+      {key:'s',forward:-1,side:0,label:'S backward',dx:0,dz:1},
+      {key:'a',forward:0,side:-1,label:'A left',dx:-1,dz:0},
+      {key:'d',forward:0,side:1,label:'D right',dx:1,dz:0}
     ];
     for(const direction of directions){
-      await page.evaluate(({x,z})=>window.__HOD_E2E__.setPosition(x,z),movementStart);
+      const lane=await page.evaluate(({dx,dz})=>{
+        const api=window.__HOD_E2E__,step=.1,distance=1.5;
+        // Search the facility for a continuous, collision-free lane in this direction.
+        for(let z=-15;z<=15;z+=.5)for(let x=-21;x<=21;x+=.5){
+          if(!api.clearAt(x,z))continue;
+          let clear=true;
+          for(let d=step;d<=distance+1e-6;d+=step){
+            if(!api.clearAt(x+dx*d,z+dz*d)){clear=false;break;}
+          }
+          if(clear)return{x,z};
+        }
+        return null;
+      },direction);
+      assert.ok(lane, `Could not find a continuous clear lane for ${direction.label}`);
+      await page.evaluate(({x,z})=>{window.__HOD_E2E__.setPosition(x,z);window.__HOD_E2E__.setYaw(0);},lane);
       const beforeState=await page.evaluate(()=>window.__HOD_E2E__.snapshot());
       const before=beforeState.position;
       const heading=beforeState.yaw;
       await page.keyboard.down(direction.key);
-      await page.waitForTimeout(350);
+      await page.waitForTimeout(600);
       const after=await page.evaluate(()=>window.__HOD_E2E__.snapshot().position);
       await page.keyboard.up(direction.key);
       const afterState=await page.evaluate(()=>window.__HOD_E2E__.snapshot());
@@ -113,7 +112,7 @@ const { spawn } = require('node:child_process');
       const distance=Math.hypot(dx,dz);
       const alignment=distance>0?(dx*expectedX+dz*expectedZ)/distance:-1;
       assert.ok(Math.abs(afterState.yaw-heading)<.01,`${direction.label} camera heading should remain stable during keyboard-only movement`);
-      assert.ok(distance>.12&&alignment>.8,`${direction.label} should move in its intended direction; delta=(${dx.toFixed(3)},${dz.toFixed(3)}), heading=${heading.toFixed(3)}, alignment=${alignment.toFixed(2)}`);
+      assert.ok(distance>.45&&alignment>.9,`${direction.label} should move in its intended direction; delta=(${dx.toFixed(3)},${dz.toFixed(3)}), heading=${heading.toFixed(3)}, alignment=${alignment.toFixed(2)}`);
     }
     // Room centres intentionally contain desks, beds, machinery and other props.
     // Find at least one collision-free player position in each room instead of
