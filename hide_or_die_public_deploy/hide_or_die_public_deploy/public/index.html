@@ -264,17 +264,23 @@ function addWallWithDoor(parent,x1,z1,x2,z2,door,mat){
   }
 }
 function makeSign(text){const c=document.createElement('canvas');c.width=512;c.height=128;const g=c.getContext('2d');g.fillStyle='#10171b';g.fillRect(0,0,512,128);g.strokeStyle='#8f2830';g.lineWidth=5;g.strokeRect(5,5,502,118);g.fillStyle='#d9d5c8';g.font='bold 48px monospace';g.textAlign='center';g.textBaseline='middle';g.fillText(text,256,66);const tex=new THREE.CanvasTexture(c);tex.colorSpace=THREE.SRGBColorSpace;return new THREE.MeshBasicMaterial({map:tex});}
-function makeGrungeMap(base,seed=1){
-  const canvas=document.createElement('canvas');canvas.width=256;canvas.height=256;
-  const ctx=canvas.getContext('2d');ctx.fillStyle=base;ctx.fillRect(0,0,256,256);
+function makeGrungeMap(base,seed=1,kind='concrete'){
+  const size=512,canvas=document.createElement('canvas');canvas.width=canvas.height=size;
+  const ctx=canvas.getContext('2d');ctx.fillStyle=base;ctx.fillRect(0,0,size,size);
   let n=seed>>>0;const rand=()=>{n=(n*1664525+1013904223)>>>0;return n/4294967296;};
-  for(let i=0;i<5200;i++){const v=Math.floor(rand()*90),a=.025+rand()*.11;ctx.fillStyle=`rgba(${v+80},${v+85},${v+88},${a})`;const x=rand()*256,y=rand()*256,s=.4+rand()*2.8;ctx.fillRect(x,y,s,s);}
-  for(let i=0;i<95;i++){ctx.strokeStyle=`rgba(4,7,8,${.08+rand()*.2})`;ctx.lineWidth=.4+rand()*1.4;ctx.beginPath();const x=rand()*256,y=rand()*256;ctx.moveTo(x,y);ctx.lineTo(x+(rand()-.5)*38,y+(rand()-.5)*22);ctx.stroke();}
-  const tex=new THREE.CanvasTexture(canvas);tex.wrapS=tex.wrapT=THREE.RepeatWrapping;tex.repeat.set(3,3);tex.colorSpace=THREE.SRGBColorSpace;tex.anisotropy=4;return tex;
+  // High-resolution layered aggregate and pitting.
+  for(let i=0;i<18000;i++){const v=Math.floor(rand()*105),a=.018+rand()*.105;const r=.35+rand()*(kind==='floor'?3.8:2.8);ctx.fillStyle='rgba('+(kind==='floor'?v+62:v+76)+','+(kind==='floor'?v+68:v+80)+','+(kind==='floor'?v+70:v+82)+','+a+')';ctx.beginPath();ctx.ellipse(rand()*size,rand()*size,r,r*.5,0,0,Math.PI*2);ctx.fill();}
+  // Broad damp patches create uneven aged concrete.
+  for(let i=0;i<42;i++){const x=rand()*size,y=rand()*size,r=14+rand()*70,g=ctx.createRadialGradient(x,y,2,x,y,r);g.addColorStop(0,'rgba(5,9,11,'+(.06+rand()*.12)+')');g.addColorStop(1,'rgba(5,9,11,0)');ctx.fillStyle=g;ctx.fillRect(x-r,y-r,r*2,r*2);}
+  // Hairline cracks, scratches and worn highlights.
+  for(let i=0;i<210;i++){const x=rand()*size,y=rand()*size,len=5+rand()*65;ctx.strokeStyle='rgba(5,8,9,'+(.09+rand()*.24)+')';ctx.lineWidth=.35+rand()*1.25;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+(rand()-.5)*len,y+len*(rand()-.5)*.42);ctx.stroke();if(i%5===0){ctx.strokeStyle='rgba(150,157,153,.10)';ctx.lineWidth=.55;ctx.beginPath();ctx.moveTo(x+1,y+1);ctx.lineTo(x+len*.22,y+len*.08);ctx.stroke();}}
+  if(kind==='floor'){for(let i=0;i<24;i++){const x=rand()*size,y=rand()*size;ctx.save();ctx.translate(x,y);ctx.rotate((rand()-.5)*.35);ctx.fillStyle='rgba(4,8,10,'+(.035+rand()*.07)+')';ctx.fillRect(-55,-2-rand()*4,110,4+rand()*8);ctx.restore();}}
+  else{for(let i=0;i<70;i++){const x=rand()*size,y=rand()*size,h=12+rand()*105;ctx.strokeStyle='rgba(7,11,13,'+(.035+rand()*.12)+')';ctx.lineWidth=.5+rand()*2;ctx.beginPath();ctx.moveTo(x,y);ctx.bezierCurveTo(x-2,y+h*.3,x+3,y+h*.65,x+(rand()-.5)*5,y+h);ctx.stroke();}}
+  const tex=new THREE.CanvasTexture(canvas);tex.wrapS=tex.wrapT=THREE.RepeatWrapping;tex.repeat.set(kind==='floor'?2.2:1.7,kind==='floor'?2.2:1.7);tex.colorSpace=THREE.SRGBColorSpace;tex.anisotropy=Math.min(8,state.renderer?.capabilities?.getMaxAnisotropy?.()||4);return tex;
 }
 function buildFacility(){
-  const floorTexture=makeGrungeMap('#252d30',17),wallTexture=makeGrungeMap('#30373a',41);
-  const floorMat=material(0x222a2d,.34,.24,{map:floorTexture,bumpMap:floorTexture,bumpScale:.075}),wallMat=material(0x30373a,.91,.08,{map:wallTexture,bumpMap:wallTexture,bumpScale:.045}),ceilingMat=material(0x14191c,.96,.05),trimMat=material(0x6b7475,.65,.3);
+  const floorTexture=makeGrungeMap('#252d30',1701,'floor'),wallTexture=makeGrungeMap('#30373a',4103,'wall');
+  const floorMat=material(0x222a2d,.34,.24,{map:floorTexture,bumpMap:floorTexture,bumpScale:.14}),wallMat=material(0x30373a,.91,.08,{map:wallTexture,bumpMap:wallTexture,bumpScale:.085}),ceilingMat=material(0x14191c,.96,.05),trimMat=material(0x6b7475,.65,.3);
   const floorGroup=new THREE.Group();state.scene.add(floorGroup);
   for(const room of ROOMS){
     addBox(floorGroup,9,.18,9,room.x,-.1,room.z,floorMat);
