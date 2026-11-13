@@ -200,11 +200,12 @@ function bindMobileControls(){
  if(!stick||stick.dataset.bound)return;stick.dataset.bound='1';
  let stickPointer=null,lookPointer=null,lastX=0,lastY=0,crouchOn=false;
  const clearStick=()=>{state.keys.KeyW=state.keys.KeyA=state.keys.KeyS=state.keys.KeyD=false;knob.style.transform='translate(0px,0px)';};
- stick.addEventListener('pointerdown',event=>{if(state.screen!=='game'||state.paused)return;stickPointer=event.pointerId;stick.setPointerCapture(event.pointerId);moveStick(event);});
+ stick.addEventListener('pointerdown',event=>{if(state.screen!=='game'||state.paused)return;stickPointer=event.pointerId;try{stick.setPointerCapture(event.pointerId);}catch(_){/* Window-level listeners below keep drag working without pointer capture. */}moveStick(event);});
  function moveStick(event){const rect=stick.getBoundingClientRect(),cx=rect.left+rect.width/2,cy=rect.top+rect.height/2;let dx=event.clientX-cx,dy=event.clientY-cy;const max=rect.width*.34,len=Math.hypot(dx,dy);if(len>max){dx=dx/len*max;dy=dy/len*max;}knob.style.transform=`translate(${dx}px,${dy}px)`;state.keys.KeyA=dx< -12;state.keys.KeyD=dx>12;state.keys.KeyW=dy< -12;state.keys.KeyS=dy>12;}
- stick.addEventListener('pointermove',event=>{if(event.pointerId===stickPointer)moveStick(event);});
+ const trackStick=event=>{if(event.pointerId===stickPointer)moveStick(event);};
+ stick.addEventListener('pointermove',trackStick);window.addEventListener('pointermove',trackStick,{passive:true});
  const releaseStick=event=>{if(event.pointerId===stickPointer){stickPointer=null;clearStick();}};
- stick.addEventListener('pointerup',releaseStick);stick.addEventListener('pointercancel',releaseStick);stick.addEventListener('lostpointercapture',()=>{stickPointer=null;clearStick();});
+ stick.addEventListener('pointerup',releaseStick);stick.addEventListener('pointercancel',releaseStick);window.addEventListener('pointerup',releaseStick,{passive:true});window.addEventListener('pointercancel',releaseStick,{passive:true});stick.addEventListener('lostpointercapture',()=>{if(stickPointer!==null){stickPointer=null;clearStick();}});
  canvas.addEventListener('pointerdown',event=>{if(event.pointerType!=='touch'||state.screen!=='game'||state.paused||event.clientX<innerWidth*.38)return;lookPointer=event.pointerId;lastX=event.clientX;lastY=event.clientY;canvas.setPointerCapture(event.pointerId);});
  canvas.addEventListener('pointermove',event=>{if(event.pointerId!==lookPointer)return;const dx=event.clientX-lastX,dy=event.clientY-lastY;lastX=event.clientX;lastY=event.clientY;state.yaw-=dx*.006;state.pitch=Math.max(-1.25,Math.min(1.25,state.pitch-dy*.005));});
  const releaseLook=event=>{if(event.pointerId===lookPointer)lookPointer=null;};canvas.addEventListener('pointerup',releaseLook);canvas.addEventListener('pointercancel',releaseLook);
