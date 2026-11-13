@@ -273,7 +273,8 @@ function makeGrungeMap(base,seed=1){
   const tex=new THREE.CanvasTexture(canvas);tex.wrapS=tex.wrapT=THREE.RepeatWrapping;tex.repeat.set(3,3);tex.colorSpace=THREE.SRGBColorSpace;tex.anisotropy=4;return tex;
 }
 function buildFacility(){
-  const floorTexture=makeGrungeMap('#252d30',17),wallTexture=makeGrungeMap('#30373a',41);\n  const floorMat=material(0x222a2d,.34,.24,{map:floorTexture,bumpMap:floorTexture,bumpScale:.075}),wallMat=material(0x30373a,.91,.08,{map:wallTexture,bumpMap:wallTexture,bumpScale:.045}),ceilingMat=material(0x14191c,.96,.05),trimMat=material(0x6b7475,.65,.3);
+  const floorTexture=makeGrungeMap('#252d30',17),wallTexture=makeGrungeMap('#30373a',41);
+  const floorMat=material(0x222a2d,.34,.24,{map:floorTexture,bumpMap:floorTexture,bumpScale:.075}),wallMat=material(0x30373a,.91,.08,{map:wallTexture,bumpMap:wallTexture,bumpScale:.045}),ceilingMat=material(0x14191c,.96,.05),trimMat=material(0x6b7475,.65,.3);
   const floorGroup=new THREE.Group();state.scene.add(floorGroup);
   for(const room of ROOMS){
     addBox(floorGroup,9,.18,9,room.x,-.1,room.z,floorMat);
