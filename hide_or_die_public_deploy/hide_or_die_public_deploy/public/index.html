@@ -61,7 +61,8 @@
   #mobileLookHint{display:none}
 }
 @media (pointer:coarse) and (orientation:landscape){
-  #portraitPrompt{display:flex}
+  body.portrait-game #portraitPrompt{display:flex}
+  body.portrait-game #gameCanvas,body.portrait-game #hud,body.portrait-game #mobileControls{visibility:hidden}
   #portraitPrompt .rotateGlyph{animation:phoneTurn 1.6s ease-in-out infinite alternate}
   @keyframes phoneTurn{from{transform:rotate(90deg)}to{transform:rotate(0deg)}}
 }
@@ -224,7 +225,7 @@ function isPlayerPathClear(from,to,radius=.34){
  return true;
 }
 function showToast(message,duration=2300){const node=$('toast');node.textContent=message;node.classList.add('show');clearTimeout(showToast.timer);showToast.timer=setTimeout(()=>node.classList.remove('show'),duration);}
-function setScreen(screen){state.screen=screen;$('menuBackdrop').style.display=screen==='menu'?'block':'none';$('lobbyScreen').style.display=screen==='lobby'?'grid':'none';$('hud').style.display=screen==='game'?'block':'none';$('gameCanvas').style.display=screen==='game'?'block':'none';if(screen==='game'&&matchMedia('(pointer:coarse)').matches){try{const lock=screen.orientation?.lock?.('portrait');if(lock&&typeof lock.catch==='function')lock.catch(()=>{});}catch(_){}}if(screen!=='game'&&document.pointerLockElement)document.exitPointerLock();}
+function setScreen(screen){state.screen=screen;document.body.classList.toggle('portrait-game',screen==='game');$('menuBackdrop').style.display=screen==='menu'?'block':'none';$('lobbyScreen').style.display=screen==='lobby'?'grid':'none';$('hud').style.display=screen==='game'?'block':'none';$('gameCanvas').style.display=screen==='game'?'block':'none';if(screen==='game'&&matchMedia('(pointer:coarse)').matches){try{const lock=screen.orientation?.lock?.('portrait');if(lock&&typeof lock.catch==='function')lock.catch(()=>{});}catch(_){}}if(screen!=='game'&&document.pointerLockElement)document.exitPointerLock();}
 function safeName(){return ($('playerName').value.trim()||'Operator').slice(0,16);}
 function updateAvatarPreview(){const preview=$('avatarPreview');if(!preview)return;preview.style.setProperty('--skin',state.avatar.skin);preview.style.setProperty('--hair',state.avatar.hair);preview.style.setProperty('--outfit',state.avatar.outfit);preview.style.setProperty('--pants',state.avatar.pants);preview.dataset.hair=state.avatar.hairStyle;preview.dataset.accessory=state.avatar.accessory;$('avatarSaveState').textContent='OPERATOR APPEARANCE SAVED AUTOMATICALLY';if(state.viewModelParts){state.viewModelParts.sleeves.forEach(mesh=>mesh.material.color.set(state.avatar.outfit));state.viewModelParts.skin.material.color.set(state.avatar.skin);}}
 function saveAvatar(){try{localStorage.setItem('hod-avatar-v2',JSON.stringify(state.avatar));}catch{}updateAvatarPreview();socket.emit('updateAvatar',state.avatar);}
