@@ -278,6 +278,78 @@ function makeGrungeMap(base,seed=1,kind='concrete'){
   else{for(let i=0;i<70;i++){const x=rand()*size,y=rand()*size,h=12+rand()*105;ctx.strokeStyle='rgba(7,11,13,'+(.035+rand()*.12)+')';ctx.lineWidth=.5+rand()*2;ctx.beginPath();ctx.moveTo(x,y);ctx.bezierCurveTo(x-2,y+h*.3,x+3,y+h*.65,x+(rand()-.5)*5,y+h);ctx.stroke();}}
   const tex=new THREE.CanvasTexture(canvas);tex.wrapS=tex.wrapT=THREE.RepeatWrapping;tex.repeat.set(kind==='floor'?2.2:1.7,kind==='floor'?2.2:1.7);tex.colorSpace=THREE.SRGBColorSpace;tex.anisotropy=Math.min(8,state.renderer?.capabilities?.getMaxAnisotropy?.()||4);return tex;
 }
+function addHospitalSetDressing(room,parent){
+  const {x,z}=room,north=z-ROOM_HALF,south=z+ROOM_HALF,east=x+ROOM_HALF,west=x-ROOM_HALF;
+  const brushed=material(0x879194,.34,.82),paint=material(0x899395,.82,.06),porcelain=material(0xb5c0bd,.42,.04),rubber=material(0x101719,.94,.02);
+  const glass=material(0x31515a,.16,.32,{transparent:true,opacity:.48,emissive:0x10272c,emissiveIntensity:.35});
+  const red=material(0x651d25,.88,.02),warning=material(0xb18a3c,.72,.18);
+  // Hospital-grade wall protection, service sockets and inspection glazing.
+  for(const side of [-1,1]){
+    const px=x+side*4.32;
+    addBox(parent,.08,.48,7.5,px,.92,z,paint);
+    for(let k=0;k<3;k++){
+      const zz=z-2.55+k*2.55;
+      addBox(parent,.07,.32,.5,px-side*.055,1.62,zz,brushed);
+      addBox(parent,.035,.19,.34,px-side*.1,1.65,zz,glass);
+      for(let j=0;j<2;j++)addBox(parent,.025,.035,.045,px-side*.125,1.56,zz-.08+j*.16,warning);
+    }
+  }
+  // Observation window with reinforced frame on the north wall; kept above the walk path.
+  addBox(parent,2.45,1.12,.13,x,2.25,north+.08,brushed);
+  addBox(parent,2.19,.88,.035,x,2.25,north+.005,glass);
+  addBox(parent,2.2,.045,.05,x,2.25,north-.02,material(0x8d343a,.42,.28,{emissive:0x3d0d12,emissiveIntensity:.4}));
+  // Wall-mounted clinical equipment rail, oxygen outlets and cable drops.
+  addBox(parent,3.35,.12,.1,x,1.58,north+.22,brushed);
+  for(let i=0;i<5;i++){
+    const ox=x-1.35+i*.68;
+    addBox(parent,.27,.34,.09,ox,1.9,north+.2,porcelain);
+    addBox(parent,.13,.12,.025,ox,1.94,north+.14,material(i===2?0x8d2832:0x3e7476,.3,.18,{emissive:i===2?0x64121a:0x16494b,emissiveIntensity:1.1}));
+    const hose=new THREE.Mesh(new THREE.CylinderGeometry(.018,.018,.42,7),rubber);hose.position.set(ox,1.25,north+.22);parent.add(hose);
+  }
+  // Low-profile mobile clinical trolley parked against the east wall.
+  const tx=east-1.05,tz=z+2.55;
+  addBox(parent,.82,.12,1.05,tx,.82,tz,brushed);
+  addBox(parent,.72,.54,.9,tx,1.13,tz,porcelain);
+  addBox(parent,.58,.025,.68,tx,1.42,tz,material(0x253136,.5,.5));
+  for(const dx of [-.3,.3])for(const dz of [-.38,.38]){
+    const wheel=new THREE.Mesh(new THREE.CylinderGeometry(.07,.07,.045,10),rubber);wheel.rotation.z=Math.PI/2;wheel.position.set(tx+dx,.12,tz+dz);parent.add(wheel);
+  }
+  // Recessed ceiling surgical examination lamp in clinical rooms.
+  if(['medical','lab','isolation','containment'].includes(room.type)){
+    const lampBase=material(0x566267,.3,.78),lampGlass=material(0xd9e9e8,.2,.12,{emissive:0xb7e3e8,emissiveIntensity:1.65});
+    addBox(parent,1.28,.12,.82,x-1.65,3.42,z+.45,lampBase);
+    for(let i=0;i<4;i++)addBox(parent,.19,.025,.52,x-2.1+i*.3,3.34,z+.45,lampGlass);
+    const arm=new THREE.Mesh(new THREE.CylinderGeometry(.035,.045,.72,8),brushed);arm.position.set(x-1.65,3.02,z+.45);parent.add(arm);
+    const head=new THREE.Mesh(new THREE.CylinderGeometry(.32,.42,.16,16),lampBase);head.position.set(x-1.65,2.62,z+.45);parent.add(head);
+    const lens=new THREE.Mesh(new THREE.CircleGeometry(.34,20),lampGlass);lens.rotation.x=-Math.PI/2;lens.position.set(x-1.65,2.525,z+.45);parent.add(lens);
+  }
+  // Blood smears and drag marks add narrative wear without covering navigation surfaces.
+  if(['medical','isolation','containment','loading','security'].includes(room.type)){
+    const stain=material(0x26090d,.34,.02,{transparent:true,opacity:.78});
+    for(let i=0;i<4;i++){
+      const mark=new THREE.Mesh(new THREE.CircleGeometry(.16+(i%2)*.11,12),stain);
+      mark.rotation.x=-Math.PI/2;mark.rotation.z=i*.7;
+      mark.position.set(x-2.9+i*.38,.012,z+3.15+(i%2)*.13);mark.scale.set(1.7,.42,1);parent.add(mark);
+    }
+    const dripMat=material(0x4a1017,.58,.02,{transparent:true,opacity:.72});
+    for(let i=0;i<3;i++)addBox(parent,.035,.28+(i%2)*.16,.012,x-3.15+i*.22,1.02,north+.04,dripMat);
+  }
+  // Room-specific clinical identity plates and emergency hardware.
+  const plate=addBox(parent,1.18,.34,.07,x-3.12,2.45,north+.09,warning);
+  plate.castShadow=false;
+  for(let i=0;i<3;i++)addBox(parent,.09,.09,.025,x-3.48+i*.32,2.45,north+.045,red);
+  if(room.type==='medical'){
+    // Secondary empty gurney, with visible mattress seams and caster frame.
+    const gx=x-2.55,gz=z+.8;
+    addBox(parent,1.72,.16,.82,gx,.68,gz,brushed);
+    addBox(parent,1.62,.14,.74,gx,.83,gz,porcelain);
+    addBox(parent,.48,.1,.5,gx-.48,.96,gz,material(0x9ca7a4,.92,.01));
+    for(const side of [-1,1]){
+      addBox(parent,.055,.42,.055,gx+side*.73,.4,gz,brushed);
+      const wheel=new THREE.Mesh(new THREE.CylinderGeometry(.07,.07,.05,10),rubber);wheel.rotation.z=Math.PI/2;wheel.position.set(gx+side*.7,.12,gz);parent.add(wheel);
+    }
+  }
+}
 function buildFacility(){
   const floorTexture=makeGrungeMap('#252d30',1701,'floor'),wallTexture=makeGrungeMap('#30373a',4103,'wall');
   const floorMat=material(0x222a2d,.34,.24,{map:floorTexture,bumpMap:floorTexture,bumpScale:.14}),wallMat=material(0x30373a,.91,.08,{map:wallTexture,bumpMap:wallTexture,bumpScale:.085}),ceilingMat=material(0x14191c,.96,.05),trimMat=material(0x6b7475,.65,.3);
@@ -298,6 +370,7 @@ function buildFacility(){
     const strip=addBox(floorGroup,2.4,.06,.11,room.x,3.2,north+.32,material(room.type==='reactor'?0xb82b35:0x9d8a5d,.35,.4,{emissive:room.type==='reactor'?0x681018:0x3b2a0a,emissiveIntensity:1.5}));
     addRoomProps(room,floorGroup);
     addRoomVisualDetails(room,floorGroup);
+    addHospitalSetDressing(room,floorGroup);
   }
   // Card-locked security wing gate; the keycard reader sits inside Security.
   state.securityDoor=addBox(floorGroup,.24,2.9,2.6,-1.5,1.45,-12,material(0x273238,.42,.72,{emissive:0x102027,emissiveIntensity:.25}));
