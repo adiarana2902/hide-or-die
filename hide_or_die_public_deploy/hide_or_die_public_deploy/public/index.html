@@ -917,8 +917,29 @@ function getCareer(){try{return{xp:0,wins:0,losses:0,runs:0,completed:[],...JSON
 function renderCareer(){const c=getCareer(),done=c.completed.length;$('careerSummary').textContent='OPERATOR RECORD · '+c.xp+' XP · '+c.wins+' EXTRACTIONS · '+c.losses+' LOSSES · '+done+'/'+SCENARIOS.length+' INCIDENTS ARCHIVED';}
 function recordIncident(won){if(state.mode!=='solo'||!state.localRun||state.localRun.recorded)return'';const c=getCareer();c.runs++;c.xp+=won?150:35;if(won){c.wins++;if(!c.completed.includes(state.localRun.scenario.title))c.completed.push(state.localRun.scenario.title);}else c.losses++;state.localRun.recorded=true;try{localStorage.setItem('hod-career-v1',JSON.stringify(c));}catch{}renderCareer();return won?'REWARD: +150 XP · INCIDENT ARCHIVED':'SURVIVAL DATA: +35 XP';}
 function startSolo(){
-  const career=getCareer(),unplayed=SCENARIOS.filter(item=>!career.completed.includes(item.title));const scenario=randomFrom(unplayed.length?unplayed:SCENARIOS);const spawn={x:-6,z:2.5};const valid=window.HODSoloCore?.chooseObjectives?.(OBJECTIVE_SPOTS,(x,z)=>isPlayerClear(x,z,.22),spawn,3)||[];const chosen=valid.length===3?valid:shuffled(OBJECTIVE_SPOTS.filter(spot=>isPlayerClear(spot.x,spot.z,.22))).slice(0,3);const objectives=chosen.map((spot,index)=>({id:`solo-cell-${index+1}`,x:spot.x,z:spot.z,label:scenario.clues[index],collected:false}));
-  const world={objectives,exit:{x:18,z:12},monster:{...nearestClearPoint({x:18,z:-12},.42),state:'patrol'},timeLeft:360,exitUnlocked:false};startWorld('solo',world,[],scenario);
+  const career=getCareer(),unplayed=SCENARIOS.filter(item=>!career.completed.includes(item.title));
+  const scenario=randomFrom(unplayed.length?unplayed:SCENARIOS),spawn={x:-6,z:2.5};
+  let chosen=window.HODSoloCore?.chooseObjectives?.(OBJECTIVE_SPOTS,(x,z)=>isPlayerClear(x,z,.22),spawn,3)||[];
+  if(chosen.length<3){
+    const candidates=[...OBJECTIVE_SPOTS];
+    for(const roomX of GRID_X)for(const roomZ of GRID_Z)for(const [dx,dz] of [[-2.7,-2.4],[2.7,-2.4],[-2.7,2.4],[2.7,2.4],[0,-2.8],[0,2.8]]){
+      candidates.push({x:roomX+dx,z:roomZ+dz});
+    }
+    const safe=[];
+    for(const point of shuffled(candidates)){
+      if(Math.hypot(point.x-spawn.x,point.z-spawn.z)<3.5)continue;
+      const clear=nearestClearPoint(point,.42);
+      if(!isPlayerClear(clear.x,clear.z,.22))continue;
+      if(safe.some(item=>distance(item,clear)<3.2))continue;
+      safe.push(clear);if(safe.length===3)break;
+    }
+    chosen=safe;
+  }
+  if(chosen.length!==3){showToast('THE ESTATE COULD NOT PLACE THE CLUES. PLEASE RESTART THE INCIDENT.',5000);console.error('Solo objective placement failed',chosen);return;}
+  const objectives=chosen.map((spot,index)=>({id:`solo-cell-${index+1}`,x:spot.x,z:spot.z,label:scenario.clues[index],collected:false}));
+  const monsterSpawn=nearestClearPoint({x:18,z:-12},.42);
+  const world={objectives,exit:{x:18,z:12},monster:{...monsterSpawn,state:'patrol'},timeLeft:360,exitUnlocked:false};
+  startWorld('solo',world,[],scenario);
 }
 function interact(){
   if(state.screen!=='game'||state.hidden||state.dead||state.paused)return;if(state.viewModel)state.viewModel.userData.interactUntil=Date.now()+360;
