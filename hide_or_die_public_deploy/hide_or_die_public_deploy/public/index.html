@@ -31,10 +31,46 @@
 @media(pointer:coarse),(max-width:800px){#mobileControls{display:block}#hud .objectivePanel{bottom:auto;top:84px;max-width:42vw;min-width:120px;padding:7px}#hud .hudRight{top:10px}#hud .hudBottom{bottom:12px}#hud .noVoice{display:none}#hud .crosshair{opacity:.6}}
 @media(max-width:520px){#mobileStick{width:122px;height:122px}#mobileKnob{left:32px;top:32px;width:54px;height:54px}.mobileActions{grid-template-columns:repeat(2,52px);gap:7px}.mobileActions button{width:52px;height:52px;font-size:8px}#hud .hudTop .hudPlate{padding:5px 7px}#hud .hudValue{font-size:14px}#hud .objectivePanel{top:76px;left:46%;max-width:40vw}#hud .hudRight{right:6px;width:90px}#hud .mapFrame{width:90px;height:70px;padding:4px}#hud .threatMeter{padding:5px;font-size:7px}#hud .threatMeter strong{font-size:13px}#hud .hudBottom{gap:4px;left:6px;bottom:8px}#hud .meterBox{min-width:60px;padding:5px}#hud .meterLabel{font-size:6px}#mobileLookHint{display:none}}
 @media(orientation:landscape) and (max-height:500px){#mobileStick{width:108px;height:108px;bottom:12px}#mobileKnob{left:25px;top:25px;width:54px;height:54px}.mobileActions{bottom:10px;grid-template-columns:repeat(3,48px)}.mobileActions button{width:48px;height:48px}#hud .objectivePanel{top:8px;bottom:auto}}
+ 
+/* Portrait-first phone gameplay layout */
+#portraitPrompt{display:none;position:fixed;inset:0;z-index:100;background:radial-gradient(ellipse at center,#17232b,#030609 72%);color:#eef3f4;align-items:center;justify-content:center;text-align:center;padding:32px;font:700 17px 'Barlow Condensed';letter-spacing:2px}
+#portraitPrompt .rotateGlyph{display:block;font-size:54px;margin-bottom:18px;transform:rotate(90deg);color:#c84a53}
+@media (pointer:coarse) and (orientation:portrait){
+  html,body{width:100%;height:100%;height:100dvh;overflow:hidden;overscroll-behavior:none}
+  #gameCanvas{width:100vw;height:100dvh;inset:0}
+  #hud{width:100vw;height:100dvh;overflow:hidden}
+  #hud .hudTop{top:max(8px,env(safe-area-inset-top));left:8px;right:8px;gap:5px;max-width:calc(100vw - 16px)}
+  #hud .hudPlate{padding:6px 8px}
+  #hud .hudKicker{font-size:7px;letter-spacing:1px}
+  #hud .hudValue{font-size:15px}
+  #hud .objectivePanel{top:66px;left:50%;width:min(68vw,280px);min-width:0;max-width:68vw;padding:7px 9px}
+  #objectiveTitle{font-size:18px}
+  #objectiveProgress{font-size:8px}
+  #hud .hudRight{top:128px;right:8px;width:82px}
+  #hud .mapFrame{width:82px;height:68px;padding:4px}
+  #hud .threatMeter{padding:5px 6px;font-size:7px}
+  #hud .threatMeter strong{font-size:13px}
+  #hud .hudBottom{left:8px;bottom:calc(154px + env(safe-area-inset-bottom));gap:5px;max-width:calc(100vw - 16px)}
+  #hud .meterBox{min-width:64px;padding:6px}
+  #hud .meterLabel{font-size:6px}
+  #mobileStick{left:max(12px,env(safe-area-inset-left));bottom:calc(18px + env(safe-area-inset-bottom));width:min(30vw,122px);height:min(30vw,122px)}
+  #mobileKnob{left:calc(50% - 27px);top:calc(50% - 27px);width:54px;height:54px}
+  #mobileStick:after{bottom:6px;font-size:8px}
+  .mobileActions{right:max(10px,env(safe-area-inset-right));bottom:calc(16px + env(safe-area-inset-bottom));grid-template-columns:repeat(2,48px);gap:6px}
+  .mobileActions button{width:48px;height:48px;font-size:7px}
+  #mobileLookHint{display:none}
+}
+@media (pointer:coarse) and (orientation:landscape){
+  #portraitPrompt{display:flex}
+  #portraitPrompt .rotateGlyph{animation:phoneTurn 1.6s ease-in-out infinite alternate}
+  @keyframes phoneTurn{from{transform:rotate(90deg)}to{transform:rotate(0deg)}}
+}
+
 </style>
 </head>
 <body>
 <canvas id="gameCanvas"></canvas>
+<div id="portraitPrompt"><div><span class="rotateGlyph">▯</span>PLEASE ROTATE YOUR PHONE<br>HIDE OR DIE IS DESIGNED FOR PORTRAIT MODE</div></div>
 <div id="menuBackdrop"><main class="menuShell">
   <section class="brandBlock">
     <div class="eyebrow">BLACKRIDGE RESEARCH FACILITY · LEVEL B-1</div>
@@ -188,7 +224,7 @@ function isPlayerPathClear(from,to,radius=.34){
  return true;
 }
 function showToast(message,duration=2300){const node=$('toast');node.textContent=message;node.classList.add('show');clearTimeout(showToast.timer);showToast.timer=setTimeout(()=>node.classList.remove('show'),duration);}
-function setScreen(screen){state.screen=screen;$('menuBackdrop').style.display=screen==='menu'?'block':'none';$('lobbyScreen').style.display=screen==='lobby'?'grid':'none';$('hud').style.display=screen==='game'?'block':'none';$('gameCanvas').style.display=screen==='game'?'block':'none';if(screen!=='game'&&document.pointerLockElement)document.exitPointerLock();}
+function setScreen(screen){state.screen=screen;$('menuBackdrop').style.display=screen==='menu'?'block':'none';$('lobbyScreen').style.display=screen==='lobby'?'grid':'none';$('hud').style.display=screen==='game'?'block':'none';$('gameCanvas').style.display=screen==='game'?'block':'none';if(screen==='game'&&matchMedia('(pointer:coarse)').matches){try{const lock=screen.orientation?.lock?.('portrait');if(lock&&typeof lock.catch==='function')lock.catch(()=>{});}catch(_){}}if(screen!=='game'&&document.pointerLockElement)document.exitPointerLock();}
 function safeName(){return ($('playerName').value.trim()||'Operator').slice(0,16);}
 function updateAvatarPreview(){const preview=$('avatarPreview');if(!preview)return;preview.style.setProperty('--skin',state.avatar.skin);preview.style.setProperty('--hair',state.avatar.hair);preview.style.setProperty('--outfit',state.avatar.outfit);preview.style.setProperty('--pants',state.avatar.pants);preview.dataset.hair=state.avatar.hairStyle;preview.dataset.accessory=state.avatar.accessory;$('avatarSaveState').textContent='OPERATOR APPEARANCE SAVED AUTOMATICALLY';if(state.viewModelParts){state.viewModelParts.sleeves.forEach(mesh=>mesh.material.color.set(state.avatar.outfit));state.viewModelParts.skin.material.color.set(state.avatar.skin);}}
 function saveAvatar(){try{localStorage.setItem('hod-avatar-v2',JSON.stringify(state.avatar));}catch{}updateAvatarPreview();socket.emit('updateAvatar',state.avatar);}
