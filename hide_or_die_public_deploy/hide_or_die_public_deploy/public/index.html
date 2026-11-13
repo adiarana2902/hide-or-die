@@ -95,6 +95,21 @@ button.secondary{background:linear-gradient(180deg,#29201a,#100d0b);border-color
 #careerSummary{background:#090807!important;border-color:#80604455!important;color:#bca88f!important}
 @media(max-width:800px){.menuShell{grid-template-columns:1fr;gap:12px;padding:20px 16px}.brandBlock{padding:16px 0 0}.logo{font-size:clamp(68px,17vw,100px);margin:12px 0 17px}.lore{font-size:12px;line-height:1.65;margin:12px 0}.panel{max-width:560px}}
 
+
+/* Blackridge haunted-estate main menu: cinematic wood, fog and candlelight. */
+#menuBackdrop{background:linear-gradient(90deg,#070706ee 0%,#0b0b0ad9 46%,#080909e8 100%),radial-gradient(ellipse at 72% 42%,#79604730,transparent 48%),repeating-linear-gradient(90deg,#ffffff05 0 1px,transparent 1px 84px),linear-gradient(180deg,#111513,#050606)!important;}
+#menuBackdrop:before{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at 68% 28%,#b9c9c51c,transparent 32%),linear-gradient(0deg,#000b,transparent 48%),repeating-linear-gradient(0deg,transparent 0 72px,#b39b7620 73px,#0000 77px);opacity:.9}
+.menuShell{position:relative;z-index:1;min-height:100%;align-items:center;gap:clamp(28px,6vw,100px);padding:clamp(24px,5vw,76px)!important}
+.logo{font-family:Georgia,'Times New Roman',serif!important;font-weight:900!important;letter-spacing:-.055em!important;text-shadow:0 8px 35px #000,0 0 28px #a47b4a30!important}
+.logo span{color:#a44a3c!important}
+.tagline,.eyebrow,.panelTitle{letter-spacing:.18em!important}
+.panel,.customizer{background:linear-gradient(145deg,#171714ed,#090a09f2)!important;border:1px solid #b99a6b55!important;box-shadow:0 24px 80px #000b,inset 0 1px #ffffff12!important;backdrop-filter:blur(14px)}
+.panelTitle,.customizerTitle{font-family:Georgia,'Times New Roman',serif!important;color:#e4d6bd!important}
+#soloButton{background:linear-gradient(180deg,#a54a3c,#5d1d1b)!important;border:1px solid #d28a6c88!important;box-shadow:0 0 34px #a52b2238,inset 0 1px #ffffff30!important}
+#soloButton:hover{filter:brightness(1.22)!important;box-shadow:0 0 42px #c14b3c70!important}
+.warningStrip{border-color:#a44a3c77!important;color:#d6b49a!important}
+.statusLine{color:#c6a77e!important}
+@media(max-width:800px){.menuShell{padding:20px 16px!important;gap:14px!important}.brandBlock{padding-top:10px}.panel{max-width:560px}}
 </style>
 </head>
 <body>
@@ -918,7 +933,11 @@ function renderCareer(){const c=getCareer(),done=c.completed.length;$('careerSum
 function recordIncident(won){if(state.mode!=='solo'||!state.localRun||state.localRun.recorded)return'';const c=getCareer();c.runs++;c.xp+=won?150:35;if(won){c.wins++;if(!c.completed.includes(state.localRun.scenario.title))c.completed.push(state.localRun.scenario.title);}else c.losses++;state.localRun.recorded=true;try{localStorage.setItem('hod-career-v1',JSON.stringify(c));}catch{}renderCareer();return won?'REWARD: +150 XP · INCIDENT ARCHIVED':'SURVIVAL DATA: +35 XP';}
 function startSolo(){
   const career=getCareer(),unplayed=SCENARIOS.filter(item=>!career.completed.includes(item.title));
-  const scenario=randomFrom(unplayed.length?unplayed:SCENARIOS),spawn={x:-6,z:2.5};
+  const scenario=randomFrom(unplayed.length?unplayed:SCENARIOS);
+  const spawnCandidates=[{x:-6,z:2.5},{x:-18,z:-12},{x:6,z:-12},{x:18,z:0},{x:-6,z:12}];
+  let spawn=null;
+  for(const candidate of spawnCandidates){const point=nearestClearPoint(candidate,.38);if(isPlayerClear(point.x,point.z,.22)){spawn=point;break;}}
+  if(!spawn)throw new Error('No safe player spawn could be found in the estate');
   let chosen=window.HODSoloCore?.chooseObjectives?.(OBJECTIVE_SPOTS,(x,z)=>isPlayerClear(x,z,.22),spawn,3)||[];
   if(chosen.length<3){
     const candidates=[...OBJECTIVE_SPOTS];
@@ -937,7 +956,7 @@ function startSolo(){
   }
   if(chosen.length!==3){showToast('THE ESTATE COULD NOT PLACE THE CLUES. PLEASE RESTART THE INCIDENT.',5000);console.error('Solo objective placement failed',chosen);return;}
   const objectives=chosen.map((spot,index)=>({id:`solo-cell-${index+1}`,x:spot.x,z:spot.z,label:scenario.clues[index],collected:false}));
-  const monsterSpawn=nearestClearPoint({x:18,z:-12},.42);
+  const monsterSpawn=nearestClearPoint({x:18,z:-12},.42);\n  if(!isPlayerClear(monsterSpawn.x,monsterSpawn.z,.22))throw new Error('The creature could not find a valid starting position');
   const world={objectives,exit:{x:18,z:12},monster:{...monsterSpawn,state:'patrol'},timeLeft:360,exitUnlocked:false};
   startWorld('solo',world,[],scenario);
 }
