@@ -635,7 +635,7 @@ function buildMonster(){
   for(let i=0;i<13;i++){const a=i*2.399,yy=.95+(i%6)*.22;ball(Math.cos(a)*.31,yy,-.27+Math.sin(a)*.055,.045,.07,.025,i%3===0?bone:wound);}
   root.userData.parts={torso,head,jaw,arms,legs};
   root.traverse(object=>{if(object.isMesh){object.castShadow=true;object.receiveShadow=true;}});
-  const aura=new THREE.PointLight(0xc11928,1.35,6,2);aura.position.set(0,1.8,0);root.add(aura);
+  const aura=new THREE.PointLight(0xc11928,1.35,6,2);aura.position.set(0,1.8,0);root.add(aura);root.userData.aura=aura;root.userData.baseTorsoY=torso.scale.y;
   root.visible=false;
 }
 function applyScenarioAtmosphere(scenario){
@@ -941,6 +941,14 @@ function animate(){
   updateMovement(dt);if(state.mode==='solo')updateSolo(dt);else if(state.world?.monster){const m=state.world.monster;state.monsterTarget={x:m.x,z:m.z,state:m.state};}
   if(state.mode==='multi'&&state.monsterTarget){state.monster.position.x=THREE.MathUtils.damp(state.monster.position.x,state.monsterTarget.x,8,dt);state.monster.position.z=THREE.MathUtils.damp(state.monster.position.z,state.monsterTarget.z,8,dt);state.monster.rotation.y=Math.atan2(state.localPos.x-state.monster.position.x,state.localPos.z-state.monster.position.z);}
   if(state.dustField)state.dustField.rotation.y+=dt*.0015;
+  // The creature breathes and makes tiny predatory head movements instead of reading as a static prop.
+  if(state.monster?.visible&&state.monster.userData.parts){
+    const t=state.clock.elapsedTime,parts=state.monster.userData.parts;
+    parts.torso.scale.y=state.monster.userData.baseTorsoY*(1+Math.sin(t*2.15)*.025);
+    parts.head.rotation.y=Math.sin(t*1.35)*.045+Math.sin(t*.47)*.07;
+    parts.jaw.rotation.x=Math.max(0,Math.sin(t*2.15-.7))*.035;
+    if(state.monster.userData.aura)state.monster.userData.aura.intensity=1.05+Math.sin(t*3.2)*.38;
+  }
   for(const mesh of state.remotePlayers.values()){const target=mesh.userData.target;mesh.position.x=THREE.MathUtils.damp(mesh.position.x,target.x,9,dt);mesh.position.z=THREE.MathUtils.damp(mesh.position.z,target.z,9,dt);}
   for(const [id,mesh] of state.objectiveMeshes){mesh.position.y=.8+Math.sin(Date.now()*.003+id.length)*.09;mesh.rotation.y+=dt*.55;}
   if(state.paused){state.renderer.render(state.scene,state.camera);return;}if(state.localRun){const flicker=Date.now()<(state.localRun.flickerUntil||0);for(const lamp of state.environmentLights){const base=(lamp.userData.baseIntensity||1)*(state.localRun.powerOn?1.55:.28);lamp.intensity=base*(flicker&&Math.random()<.58?.035:1);}}if(state.viewModel){const interacting=Date.now()<(state.viewModel.userData.interactUntil||0),hidden=state.hidden;state.viewModel.rotation.x=THREE.MathUtils.damp(state.viewModel.rotation.x,hidden?.42:interacting?-.22:0,15,dt);state.viewModel.position.y=THREE.MathUtils.damp(state.viewModel.position.y,hidden?-1.05:state.crouched?-.4:-.34,12,dt);state.viewModel.position.z=THREE.MathUtils.damp(state.viewModel.position.z,hidden?-.25:interacting?-.7:-.62,15,dt);}if(state.hidden)state.camera.position.y=THREE.MathUtils.damp(state.camera.position.y,.78,10,dt);if(state.flashlightOn&&state.battery>0){state.battery=Math.max(0,state.battery-dt*.12);state.flashlight.intensity=42*(state.battery/100);$('batteryFill').style.width=state.battery+'%';if(state.battery===0){state.flashlight.intensity=0;state.flashlightOn=false;showToast('FLASHLIGHT BATTERY EMPTY',1800);}}
