@@ -67,6 +67,34 @@
   @keyframes phoneTurn{from{transform:rotate(90deg)}to{transform:rotate(0deg)}}
 }
 
+/* Reference-led haunted mansion title screen */
+#menuBackdrop{background:radial-gradient(ellipse at 74% 42%,#8c654025 0,transparent 24%),radial-gradient(ellipse at 82% 12%,#b58a5520 0,transparent 18%),linear-gradient(90deg,#070707 0%,#0a0909ef 35%,#090a0bd9 63%,#050608 100%),repeating-linear-gradient(90deg,#241911 0 3px,#0b0a09 4px 74px,#21170f 76px 80px)}
+#menuBackdrop:before{background:linear-gradient(90deg,transparent 0 8%,#9b74431c 8.2% 8.6%,transparent 8.8% 91%,#9b74431c 91.2% 91.6%,transparent 91.8%),repeating-linear-gradient(0deg,transparent 0 84px,#a17b4b1c 85px 88px,transparent 89px 176px),radial-gradient(ellipse at 70% 35%,#b2c2c52a 0,transparent 34%),linear-gradient(180deg,#03040555,#000b);opacity:1}
+#menuBackdrop:after{content:'THE HOUSE REMEMBERS / BLACKRIDGE ESTATE';color:#9a7958;letter-spacing:4px}
+.menuShell{width:min(1320px,100%);grid-template-columns:minmax(0,1.15fr) minmax(340px,.72fr);gap:clamp(28px,5vw,78px);padding:clamp(22px,4vw,58px)}
+.brandBlock{align-self:center;padding:clamp(18px,4vw,48px) 0}
+.eyebrow{color:#c79a62;letter-spacing:5px}
+.logo{font-family:Georgia,'Times New Roman',serif;font-size:clamp(78px,11.5vw,154px);font-weight:900;letter-spacing:-7px;line-height:.76;text-shadow:0 8px 65px #000,0 0 28px #9b25201c}
+.logo span{color:#a32d2b}
+.tagline{font-family:Georgia,serif;font-weight:400;letter-spacing:5px;color:#d0bda3}
+.lore{color:#b0a79a;max-width:490px;font-family:Georgia,serif;font-size:14px;line-height:1.9}
+.warningStrip{border-left-color:#a12a27;background:#6b17151c;color:#c9b8a5}
+.panel{background:linear-gradient(145deg,#17110fef,#080707f5);border:1px solid #a88b6338;box-shadow:0 30px 100px #000d,inset 0 0 45px #6d43200b;backdrop-filter:blur(10px)}
+.panel:before{background:#a12d29}
+.panelTitle{font-family:Georgia,serif;font-weight:600;letter-spacing:2px;color:#e5d6c1}
+.muted{color:#a99e90}.fieldLabel{color:#b59c7d}
+input,select{background:#090807;border-color:#76604a;color:#e8dccb}
+button{background:linear-gradient(180deg,#91352e,#4b1717);border-color:#a96a4c;color:#f4e9d8;font-family:Georgia,serif;letter-spacing:1.5px}
+button.secondary{background:linear-gradient(180deg,#29201a,#100d0b);border-color:#796047;color:#d8c8b2}
+.customizer{background:linear-gradient(145deg,#100d0b,#211811);border-color:#80604455}
+.customizerTitle{font-family:Georgia,serif;color:#e3d0b4}
+.avatarPreview{background:radial-gradient(circle at 50% 30%,#51402f,#090706 76%);border-color:#9a79554a}
+.actionStack button:first-child{min-height:58px;font-size:15px;letter-spacing:2px}
+#soloButton{box-shadow:0 0 28px #a92c2426,inset 0 1px #ffffff20}
+.statusLine{color:#b69b7b}
+#careerSummary{background:#090807!important;border-color:#80604455!important;color:#bca88f!important}
+@media(max-width:800px){.menuShell{grid-template-columns:1fr;gap:12px;padding:20px 16px}.brandBlock{padding:16px 0 0}.logo{font-size:clamp(68px,17vw,100px);margin:12px 0 17px}.lore{font-size:12px;line-height:1.65;margin:12px 0}.panel{max-width:560px}}
+
 </style>
 </head>
 <body>
@@ -74,14 +102,14 @@
 <div id="portraitPrompt"><div><span class="rotateGlyph">▯</span>PLEASE ROTATE YOUR PHONE<br>HIDE OR DIE IS DESIGNED FOR PORTRAIT MODE</div></div>
 <div id="menuBackdrop"><main class="menuShell">
   <section class="brandBlock">
-    <div class="eyebrow">BLACKRIDGE RESEARCH FACILITY · LEVEL B-1</div>
+    <div class="eyebrow">BLACKRIDGE ESTATE · THE ABANDONED WING</div>
     <h1 class="logo">HIDE <span>OR</span><br>DIE</h1>
-    <div class="tagline">THE NIGHT SHIFT NEVER ENDED.</div>
-    <p class="lore">At 02:17, every door in Blackridge sealed at once. The emergency generators are dead. Something that was never listed on the staff roster is moving through the lower levels. Restore the power, recover the key cells and reach extraction before it finds you.</p>
+    <div class="tagline">SOME DOORS SHOULD NEVER OPEN.</div>
+    <p class="lore">The estate has stood empty for decades. Tonight, lights have appeared behind its boarded windows. Explore the halls, recover what was hidden and find a way out before the thing in the dark finds you.</p>
     <div class="warningStrip">⚠ PERSONNEL NOTICE · DO NOT ENTER THE ISOLATION WING ALONE</div><div class="muted" id="careerSummary" style="margin-top:14px;padding:10px 12px;background:#080d11;border:1px solid #ffffff20">CAREER RECORD · LOADING</div>
   </section>
   <section class="panel">
-    <h2 class="panelTitle">ENTER THE FACILITY</h2><div class="muted">CO-OP SURVIVAL / SINGLE-PLAYER INCIDENTS</div>
+    <h2 class="panelTitle">ENTER THE HOUSE</h2><div class="muted">SOLO NIGHTMARES / CO-OP SURVIVAL</div>
     <label class="fieldLabel" for="playerName">Operator callsign</label><input class="full" id="playerName" maxlength="16" value="Operator" autocomplete="off">
     <section class="customizer" aria-label="Operator customization">
       <div class="customizerHeading"><div><div class="customizerTitle">CUSTOMIZE YOUR OPERATOR</div><div class="customizerSub">Changes save automatically</div></div>
@@ -95,7 +123,7 @@
         <label>Accessory<select id="accessory"><option value="none">None</option><option value="mask">Respirator</option><option value="cap">Cap</option></select></label>
       </div><div class="customizerNote" id="avatarSaveState">OPERATOR APPEARANCE SAVES AUTOMATICALLY</div>
     </section>
-    <div class="actionStack"><button id="soloButton" class="full">▶ BEGIN SOLO INCIDENT</button><button id="createButton" class="secondary full">CREATE PRIVATE CO-OP ROOM</button></div>
+    <div class="actionStack"><button id="soloButton" class="full">▶ ENTER ALONE</button><button id="createButton" class="secondary full">GATHER YOUR FRIENDS</button></div>
     <div class="secondaryActions" style="margin-top:9px"><button id="showJoin" class="secondary">JOIN WITH CODE</button><button id="howToButton" class="secondary">FIELD MANUAL</button></div>
     <div id="joinForm" style="display:none;margin-top:12px;gap:8px"><input id="roomCode" maxlength="6" placeholder="6-CHARACTER CODE" style="width:100%;text-transform:uppercase"><button id="joinButton" class="full">JOIN SESSION</button></div>
     <div class="statusLine" id="connectionStatus">CONNECTING TO BLACKRIDGE NETWORK…</div>
@@ -889,7 +917,7 @@ function getCareer(){try{return{xp:0,wins:0,losses:0,runs:0,completed:[],...JSON
 function renderCareer(){const c=getCareer(),done=c.completed.length;$('careerSummary').textContent='OPERATOR RECORD · '+c.xp+' XP · '+c.wins+' EXTRACTIONS · '+c.losses+' LOSSES · '+done+'/'+SCENARIOS.length+' INCIDENTS ARCHIVED';}
 function recordIncident(won){if(state.mode!=='solo'||!state.localRun||state.localRun.recorded)return'';const c=getCareer();c.runs++;c.xp+=won?150:35;if(won){c.wins++;if(!c.completed.includes(state.localRun.scenario.title))c.completed.push(state.localRun.scenario.title);}else c.losses++;state.localRun.recorded=true;try{localStorage.setItem('hod-career-v1',JSON.stringify(c));}catch{}renderCareer();return won?'REWARD: +150 XP · INCIDENT ARCHIVED':'SURVIVAL DATA: +35 XP';}
 function startSolo(){
-  const career=getCareer(),unplayed=SCENARIOS.filter(item=>!career.completed.includes(item.title));const scenario=randomFrom(unplayed.length?unplayed:SCENARIOS);const spawn={x:-6,z:2.5};const valid=window.HODSoloCore.chooseObjectives(OBJECTIVE_SPOTS,(x,z)=>isPlayerClear(x,z,.22),spawn,3);const chosen=valid.length===3?valid:shuffled(OBJECTIVE_SPOTS).slice(0,3);const objectives=chosen.map((spot,index)=>({id:`solo-cell-${index+1}`,x:spot.x,z:spot.z,label:scenario.clues[index],collected:false}));
+  const career=getCareer(),unplayed=SCENARIOS.filter(item=>!career.completed.includes(item.title));const scenario=randomFrom(unplayed.length?unplayed:SCENARIOS);const spawn={x:-6,z:2.5};const valid=window.HODSoloCore?.chooseObjectives?.(OBJECTIVE_SPOTS,(x,z)=>isPlayerClear(x,z,.22),spawn,3)||[];const chosen=valid.length===3?valid:shuffled(OBJECTIVE_SPOTS.filter(spot=>isPlayerClear(spot.x,spot.z,.22))).slice(0,3);const objectives=chosen.map((spot,index)=>({id:`solo-cell-${index+1}`,x:spot.x,z:spot.z,label:scenario.clues[index],collected:false}));
   const world={objectives,exit:{x:18,z:12},monster:{...nearestClearPoint({x:18,z:-12},.42),state:'patrol'},timeLeft:360,exitUnlocked:false};startWorld('solo',world,[],scenario);
 }
 function interact(){
@@ -992,7 +1020,7 @@ function animate(){
 $('inventoryClose').onclick=closePanels;$('journalClose').onclick=closePanels;$('inspectClose').onclick=()=>{$('inspectPanel').style.display='none';};$('inventoryList').addEventListener('click',event=>{const id=event.target.dataset.use;if(id)useInventoryItem(id);});$('journalList').addEventListener('click',event=>{const id=event.target.dataset.read;if(id)showEvidence(id);});$('resumeButton').onclick=closePanels;$('settingsButton').onclick=()=>{$('settingsPanel').style.display=$('settingsPanel').style.display==='none'?'block':'none';};$('pauseMenuButton').onclick=()=>{closePanels();state.localRun=null;state.keys={};setScreen('menu');};$('volumeSetting').oninput=event=>{if(state.audio)state.audio.master.gain.value=Number(event.target.value)/100;localStorage.setItem('hod-volume',event.target.value);};$('sensitivitySetting').oninput=event=>{state.mouseSensitivity=Number(event.target.value)/10000;localStorage.setItem('hod-sensitivity',event.target.value);};$('shakeSetting').oninput=event=>localStorage.setItem('hod-shake',event.target.value);$('fovSetting').oninput=event=>{if(state.camera){state.camera.fov=Number(event.target.value);state.camera.updateProjectionMatrix();}localStorage.setItem('hod-fov',event.target.value);};
 
 // Menu / lobby events.
-$('soloButton').onclick=()=>{try{startSolo();}catch(error){console.error('Solo incident failed to start',error);showToast('SOLO INCIDENT COULD NOT START — REFRESH AND RETRY',4500);}};
+$('soloButton').onclick=()=>{const button=$('soloButton');if(button.dataset.starting==='1')return;button.dataset.starting='1';button.disabled=true;button.textContent='ENTERING THE HOUSE…';try{startSolo();if(state.screen!=='game')throw new Error('Game screen did not activate');$('connectionStatus').textContent='SOLO INCIDENT READY · YOU ARE NOT ALONE';}catch(error){console.error('Solo incident failed to start',error);$('connectionStatus').textContent='START FAILED: '+String(error?.message||error).slice(0,120);showToast('SOLO START ERROR: '+String(error?.message||error).slice(0,100),6000);setScreen('menu');}finally{button.dataset.starting='0';button.disabled=false;button.textContent='▶ ENTER ALONE';}};
 $('createButton').onclick=()=>{if(!socket.connected)return showToast('NETWORK NOT READY — TRY AGAIN');socket.emit('createRoom',{name:safeName(),avatar:state.avatar});};
 $('showJoin').onclick=()=>{$('joinForm').style.display=$('joinForm').style.display==='none'?'grid':'none';};
 $('joinButton').onclick=()=>{const code=$('roomCode').value.trim().toUpperCase();if(!/^[A-F0-9]{6}$/.test(code))return showToast('ENTER A VALID 6-CHARACTER CODE');socket.emit('joinRoom',{name:safeName(),code,avatar:state.avatar});};
