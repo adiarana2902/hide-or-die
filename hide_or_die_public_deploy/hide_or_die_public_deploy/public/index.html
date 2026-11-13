@@ -639,15 +639,87 @@ function startWorld(mode,world,players,scenario){
   updateWorld(world);setScreen('game');if(mode==='solo')setupSoloSystems();startAudio();$('gameCanvas').requestPointerLock?.();showToast(scenario?scenario.intro:'TEAM LINK ESTABLISHED — RESTORE POWER AND EXTRACT',4300);
 }
 function addRemotePlayer(player){
-  const avatar=player.avatar||{},group=new THREE.Group(),suit=material(avatar.outfit||'#365066',.8,.05),skin=material(avatar.skin||'#c6865b',.8,.02),hair=material(avatar.hair||'#24201e',.9,.01),pants=material(avatar.pants||'#22252b',.94,.02),boot=material(0x111519,.95,.02);
-  const body=new THREE.Mesh(new THREE.CapsuleGeometry(.25,.7,4,7),suit);body.position.y=1.05;group.add(body);
-  const head=new THREE.Mesh(new THREE.SphereGeometry(.18,10,8),skin);head.position.y=1.62;group.add(head);
-  if(avatar.outfitStyle==='coat'){const coat=new THREE.Mesh(new THREE.BoxGeometry(.47,.58,.27),suit);coat.position.set(0,.92,0);group.add(coat);}
-  for(const side of [-1,1]){const leg=new THREE.Mesh(new THREE.CapsuleGeometry(.12,.48,4,6),pants);leg.position.set(side*.14,.45,.015);group.add(leg);const shoe=new THREE.Mesh(new THREE.BoxGeometry(.17,.12,.28),boot);shoe.position.set(side*.14,.13,-.035);group.add(shoe);const arm=new THREE.Mesh(new THREE.CapsuleGeometry(.085,.48,4,6),suit);arm.position.set(side*.32,1.08,0);arm.rotation.z=side*.08;group.add(arm);}
-  if(avatar.hairStyle!=='shaved'){const top=new THREE.Mesh(new THREE.SphereGeometry(.185,10,7),hair);top.scale.set(1,.46,1);top.position.set(0,1.76,0);group.add(top);if(avatar.hairStyle==='long'){for(const side of [-1,1]){const lock=new THREE.Mesh(new THREE.CapsuleGeometry(.045,.25,4,6),hair);lock.position.set(side*.15,1.58,.015);group.add(lock);}}if(avatar.hairStyle==='spiky'){for(let i=-1;i<=1;i++){const spike=new THREE.Mesh(new THREE.ConeGeometry(.055,.18,6),hair);spike.position.set(i*.09,1.87,0);group.add(spike);}}}
-  if(avatar.accessory==='mask'){const mask=new THREE.Mesh(new THREE.BoxGeometry(.24,.1,.06),material(0x20292d,.65,.25));mask.position.set(0,1.55,-.16);group.add(mask);}
-  if(avatar.accessory==='cap'){const cap=new THREE.Mesh(new THREE.CylinderGeometry(.17,.17,.07,12),hair);cap.position.set(0,1.79,0);group.add(cap);}
-  group.position.set(player.x,0,player.z);group.userData={id:player.id,target:{x:player.x,z:player.z},alive:true,avatar};state.scene.add(group);state.remotePlayers.set(player.id,group);
+  const avatar=player.avatar||{},group=new THREE.Group();
+  const suit=material(avatar.outfit||'#365066',.76,.08),skin=material(avatar.skin||'#c6865b',.78,.015);
+  const hair=material(avatar.hair||'#24201e',.92,.01),pants=material(avatar.pants||'#22252b',.88,.025);
+  const boot=material(0x101518,.62,.24),rubber=material(0x171d20,.96,.01);
+  const seam=material(0x9ba5a3,.72,.18),darkCloth=material(0x20292d,.92,.015);
+  const add=(geo,mat,x,y,z,rx=0,ry=0,rz=0)=>{const m=new THREE.Mesh(geo,mat);m.position.set(x,y,z);m.rotation.set(rx,ry,rz);m.castShadow=true;m.receiveShadow=true;group.add(m);return m;};
+  const ball=(mat,x,y,z,sx,sy,sz)=>{const m=add(new THREE.SphereGeometry(1,16,12),mat,x,y,z);m.scale.set(sx,sy,sz);return m;};
+  const capsule=(mat,x,y,z,r,len,rz=0,rx=0)=>add(new THREE.CapsuleGeometry(r,len,5,9),mat,x,y,z,rx,0,rz);
+  // Anatomical silhouette with layered jacket, shoulders and waist rather than a single capsule.
+  capsule(suit,0,1.08,0,.235,.53);
+  ball(suit,0,1.34,0,.29,.22,.19);
+  ball(darkCloth,0,.77,.005,.225,.18,.16);
+  capsule(skin,0,1.51,-.005,.075,.13);
+  // Jacket front panels, zipper, collar and reinforced seams.
+  const jacketPanel=material(avatar.outfit||'#365066',.88,.04);
+  for(const side of [-1,1]){
+    const panel=add(new THREE.BoxGeometry(.19,.55,.035),jacketPanel,side*.105,1.08,-.205);
+    panel.rotation.z=side*-.025;
+    add(new THREE.BoxGeometry(.018,.48,.018),seam,side*.018,1.08,-.228);
+    add(new THREE.BoxGeometry(.13,.055,.045),darkCloth,side*.09,1.43,-.19,0,0,side*-.28);
+    add(new THREE.BoxGeometry(.095,.17,.045),darkCloth,side*.205,1.18,-.19);
+  }
+  add(new THREE.BoxGeometry(.025,.43,.025),material(0x9ba5a3,.38,.72),0,1.08,-.235);
+  for(let i=0;i<5;i++)ball(seam,0,1.27-i*.085,-.25,.012,.012,.009);
+  // Neck, ears, jaw, nose and eyes catch the flashlight at close range.
+  ball(skin,0,1.68,0,.145,.19,.14);
+  ball(skin,0,1.84,-.015,.17,.205,.16);
+  ball(skin,0,1.765,-.13,.12,.075,.055);
+  for(const side of [-1,1]){
+    ball(skin,side*.17,1.84,0,.045,.075,.045);
+    ball(material(0x1b2020,.34,.02),side*.065,1.87,-.151,.022,.014,.012);
+    ball(material(0xb8c0bc,.32,.02),side*.065,1.87,-.163,.008,.008,.006);
+    const brow=add(new THREE.CapsuleGeometry(.018,.07,3,6),hair,side*.065,1.91,-.15);brow.rotation.z=side*-.12;
+  }
+  const nose=add(new THREE.ConeGeometry(.035,.095,6),skin,0,1.82,-.19,Math.PI/2);
+  // Hair silhouettes are distinct per selected style.
+  if(avatar.hairStyle!=='shaved'){
+    ball(hair,0,1.99,.005,.18,.085,.17);
+    if(avatar.hairStyle==='long'){
+      for(const side of [-1,1])capsule(hair,side*.155,1.72,.035,.043,.28,side*-.04);
+      ball(hair,0,1.91,.105,.16,.13,.09);
+    }else if(avatar.hairStyle==='spiky'){
+      for(let i=0;i<5;i++){const spike=add(new THREE.ConeGeometry(.055,.18+(i%2)*.06,7),hair,(i-2)*.065,2.08,.015);spike.rotation.z=(i-2)*-.13;}
+    }else{
+      ball(hair,0,1.99,-.035,.17,.07,.14);
+    }
+  }
+  // Shoulder caps, articulated arms, gloves and individual fingers.
+  for(const side of [-1,1]){
+    ball(suit,side*.285,1.37,0,.145,.16,.15);
+    capsule(suit,side*.34,1.16,-.005,.09,.27,side*-.08);
+    ball(suit,side*.37,1.01,-.015,.092,.095,.095);
+    capsule(suit,side*.385,.84,-.035,.073,.25,side*-.025);
+    ball(skin,side*.39,.67,-.055,.075,.075,.07);
+    for(let f=0;f<4;f++)capsule(rubber,side*.39+(f-1.5)*.032,.59,-.065,.016,.075,side*.04);
+    ball(rubber,side*.39,.66,-.06,.065,.045,.065);
+    // Tailored trouser legs with knee panels and substantial footwear.
+    ball(pants,side*.125,.62,0,.135,.22,.145);
+    capsule(pants,side*.13,.39,-.005,.095,.28);
+    ball(darkCloth,side*.13,.25,-.018,.105,.105,.11);
+    capsule(pants,side*.13,.16,-.025,.07,.14);
+    add(new THREE.BoxGeometry(.18,.13,.31),boot,side*.13,.095,-.09);
+    add(new THREE.BoxGeometry(.17,.035,.28),rubber,side*.13,.035,-.09);
+    add(new THREE.BoxGeometry(.19,.045,.055),seam,side*.13,.16,-.045);
+  }
+  // Functional-looking shoulder strap, utility pouch and compact back pack.
+  const strap=add(new THREE.BoxGeometry(.075,.66,.045),darkCloth,-.13,1.12,-.19,0,0,-.28);
+  add(new THREE.BoxGeometry(.25,.34,.13),darkCloth,0,1.12,.19);
+  add(new THREE.BoxGeometry(.18,.15,.035),suit,.29,1.0,-.12);
+  add(new THREE.BoxGeometry(.12,.025,.02),seam,.29,1.08,-.145);
+  if(avatar.accessory==='mask'){
+    add(new THREE.BoxGeometry(.24,.12,.075),material(0x20292d,.65,.25),0,1.77,-.17);
+    for(let i=0;i<5;i++)add(new THREE.BoxGeometry(.012,.055,.008),seam,(i-2)*.035,1.77,-.213);
+  }
+  if(avatar.accessory==='cap'){
+    add(new THREE.CylinderGeometry(.18,.18,.07,16),hair,0,2.015,0);
+    add(new THREE.BoxGeometry(.28,.025,.16),hair,0,1.99,-.12);
+  }
+  group.position.set(player.x,0,player.z);
+  group.userData={id:player.id,target:{x:player.x,z:player.z},alive:true,avatar};
+  state.scene.add(group);state.remotePlayers.set(player.id,group);
 }
 function updateRemotePlayers(players){
   const active=new Set();for(const p of players||[]){if(p.id===socket.id)continue;active.add(p.id);let mesh=state.remotePlayers.get(p.id);if(!mesh){addRemotePlayer(p);mesh=state.remotePlayers.get(p.id);}mesh.userData.target={x:p.x,z:p.z};mesh.userData.alive=p.alive!==false&&!p.escaped;mesh.visible=mesh.userData.alive;}
