@@ -225,11 +225,11 @@ function init3D(){
   const canvas=$('gameCanvas');
   bindMobileControls();
   state.renderer=new THREE.WebGLRenderer({canvas,antialias:true,powerPreference:'high-performance'});
-  const mobileDevice=matchMedia('(pointer:coarse),(max-width:800px)').matches;state.renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,mobileDevice?1.2:1.65));state.renderer.shadowMap.enabled=true;state.renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+  const mobileDevice=matchMedia('(pointer:coarse),(max-width:800px)').matches;state.renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,mobileDevice?1.35:2));state.renderer.shadowMap.enabled=true;state.renderer.shadowMap.type=THREE.PCFSoftShadowMap;state.renderer.shadowMap.autoUpdate=true;
   state.renderer.setSize(window.innerWidth,window.innerHeight,false);
   state.renderer.outputColorSpace=THREE.SRGBColorSpace;
   state.renderer.toneMapping=THREE.ACESFilmicToneMapping;
-  state.renderer.toneMappingExposure=1.05;
+  state.renderer.toneMappingExposure=1.12;
   state.scene=new THREE.Scene();
   state.scene.background=new THREE.Color(0x030609);
   state.scene.fog=new THREE.FogExp2(0x05090d,0.026);
@@ -238,7 +238,7 @@ function init3D(){
   state.scene.add(state.camera);
   const hemi=new THREE.HemisphereLight(0x93a8b8,0x17110d,0.34);state.scene.add(hemi);
   const ambient=new THREE.AmbientLight(0x26343d,0.24);state.scene.add(ambient);
-  const fill=new THREE.DirectionalLight(0x5e7185,0.35);fill.position.set(-12,18,4);fill.castShadow=true;fill.shadow.mapSize.set(mobileDevice?512:1024,mobileDevice?512:1024);fill.shadow.camera.near=.5;fill.shadow.camera.far=52;fill.shadow.camera.left=-34;fill.shadow.camera.right=34;fill.shadow.camera.top=34;fill.shadow.camera.bottom=-34;fill.shadow.bias=-.00018;fill.shadow.normalBias=.025;state.scene.add(fill);
+  const fill=new THREE.DirectionalLight(0x5e7185,0.35);fill.position.set(-12,18,4);fill.castShadow=true;fill.shadow.mapSize.set(mobileDevice?1024:2048,mobileDevice?1024:2048);fill.shadow.camera.near=.5;fill.shadow.camera.far=52;fill.shadow.camera.left=-34;fill.shadow.camera.right=34;fill.shadow.camera.top=34;fill.shadow.camera.bottom=-34;fill.shadow.bias=-.00018;fill.shadow.normalBias=.025;state.scene.add(fill);
   buildFacility();buildViewModel();buildMonster();
   state.clock=new THREE.Clock();
   window.addEventListener('resize',resize3D);
@@ -321,36 +321,67 @@ function buildFacility(){
   state.scene.userData.staticFacility=floorGroup;
 }
 function addRoomVisualDetails(room,parent){
-  const {x,z}=room, north=z-ROOM_HALF, south=z+ROOM_HALF;
-  const steel=material(0x465156,.48,.72),dark=material(0x11191d,.82,.38);
-  const glowColor=room.type==='reactor'?0xff3442:room.type==='medical'?0x8acbd8:0xd8a65e;
-  const glow=material(glowColor,.28,.22,{emissive:glowColor,emissiveIntensity:2.2});
-  // Recessed industrial ceiling fixture: a dark housing, bright diffuser and end caps.
-  addBox(parent,2.75,.13,.82,x,3.57,z, dark);
-  addBox(parent,2.38,.035,.48,x,3.49,z, glow);
+  const {x,z}=room,north=z-ROOM_HALF,south=z+ROOM_HALF,east=x+ROOM_HALF,west=x-ROOM_HALF;
+  const steel=material(0x465156,.42,.78),dark=material(0x0d1418,.84,.48),rubber=material(0x151a1d,.96,.02);
+  const glowColor=room.type==='reactor'?0xff2635:room.type==='medical'?0x9bd7e2:0xd5a45f;
+  const glow=material(glowColor,.22,.18,{emissive:glowColor,emissiveIntensity:2.8});
+  const screen=material(0x10252a,.24,.2,{emissive:0x16444b,emissiveIntensity:1.5});
+  // Recessed ceiling bay with multiple fluorescent tubes and a dark reflector.
+  addBox(parent,3.15,.16,1.05,x,3.56,z,dark);
+  addBox(parent,2.88,.035,.72,x,3.465,z,glow);
+  for(const dx of [-1.22,1.22])addBox(parent,.055,.045,.78,x+dx,3.44,z,steel);
+  // Ventilation grille, ducts and exposed service runs.
+  addBox(parent,1.12,.09,.68,x+2.65,3.57,z-2.5,steel);
+  for(let i=0;i<7;i++)addBox(parent,.035,.018,.56,x+2.22+i*.14,3.515,z-2.5,dark);
+  const duct=new THREE.Mesh(new THREE.CylinderGeometry(.085,.085,7.8,10),steel);duct.rotation.z=Math.PI/2;duct.position.set(x,3.28,north+.25);parent.add(duct);
+  const conduit=new THREE.Mesh(new THREE.CylinderGeometry(.045,.045,7.8,8),dark);conduit.rotation.z=Math.PI/2;conduit.position.set(x,3.12,south-.22);parent.add(conduit);
+  // Structural wall ribs, lower crash rails and continuous floor edge channels.
   for(const side of [-1,1]){
-    addBox(parent,.12,.18,.9,x+side*1.34,3.55,z,steel);
-    // Structural ribs and service conduits add depth to otherwise flat room walls.
-    addBox(parent,.13,3.05,.16,x+side*4.28,1.52,north+.22,steel);
-    addBox(parent,.09,.09,8.25,x+side*4.22,2.95,z,dark);
+    addBox(parent,.14,3.05,.18,x+side*4.27,1.52,north+.22,steel);
+    addBox(parent,.09,.11,8.35,x+side*4.18,2.92,z,dark);
+    addBox(parent,.12,.16,8.25,x+side*4.24,.32,z,steel);
+    addBox(parent,.035,.035,8.25,x+side*4.16,.48,z,glow);
   }
-  const conduit=new THREE.Mesh(new THREE.CylinderGeometry(.045,.045,8.25,8),steel);
-  conduit.rotation.z=Math.PI/2;conduit.position.set(x,3.23,north+.25);parent.add(conduit);
-  const lowerRail=addBox(parent,8.55,.12,.12,x,.22,north+.19,dark);
-  lowerRail.castShadow=false;
-  // Narrow floor inlays break up the large repeated concrete slabs.
-  for(const edge of [-1,1]){
-    const seam=addBox(parent,8.25,.012,.035,x,-.004,z+edge*4.22,steel);
-    seam.castShadow=false;seam.receiveShadow=false;
-  }
-  // Small warning plates make key areas read clearly at a glance.
-  if(['generator','reactor','isolation','containment'].includes(room.type)){
-    const hazard=material(0xb58b32,.62,.28,{emissive:0x38250a,emissiveIntensity:.25});
-    for(let i=0;i<5;i++){
-      const stripe=addBox(parent,.13,.018,.48,x-1.25+i*.62,.012,z+3.75,hazard);
-      stripe.rotation.y=-.38;stripe.castShadow=false;
+  addBox(parent,8.4,.12,.13,x,.24,north+.18,dark);
+  addBox(parent,8.4,.035,.04,x,.31,north+.18,steel);
+  for(const edge of [-1,1]){const seam=addBox(parent,8.3,.016,.045,x,.006,z+edge*4.2,steel);seam.castShadow=false;seam.receiveShadow=false;}
+  // Heavy hospital door surround at each connected opening, leaving the full walkable aperture clear.
+  const doorW=2.75;
+  const frameMat=material(0x343f43,.38,.82);
+  for(const side of [-1,1]){
+    if(GRID_Z.includes(room.z-12)){
+      addBox(parent,.13,3.25,.2,x+side*(doorW/2+.07),1.62,north+.12,frameMat);
+      addBox(parent,.2,.13,.24,x+side*(doorW/2+.07),3.18,north+.12,frameMat);
+    }
+    if(GRID_Z.includes(room.z+12)){
+      addBox(parent,.13,3.25,.2,x+side*(doorW/2+.07),1.62,south-.12,frameMat);
+      addBox(parent,.2,.13,.24,x+side*(doorW/2+.07),3.18,south-.12,frameMat);
+    }
+    if(GRID_X.includes(room.x-12)){
+      addBox(parent,.2,3.25,.13,west+.12,1.62,z+side*(doorW/2+.07),frameMat);
+      addBox(parent,.24,.13,.2,west+.12,3.18,z+side*(doorW/2+.07),frameMat);
+    }
+    if(GRID_X.includes(room.x+12)){
+      addBox(parent,.2,3.25,.13,east-.12,1.62,z+side*(doorW/2+.07),frameMat);
+      addBox(parent,.24,.13,.2,east-.12,3.18,z+side*(doorW/2+.07),frameMat);
     }
   }
+  // Wall-mounted clinical status panel, readable illuminated glass and physical buttons.
+  const panelX=x+3.98,panelZ=z-1.55;
+  addBox(parent,.12,1.12,1.45,panelX,1.95,panelZ,steel);
+  addBox(parent,.035,.72,1.08,panelX-.075,2.02,panelZ,screen);
+  for(let i=0;i<4;i++){
+    addBox(parent,.045,.055,.12,panelX-.11,1.55+i*.13,panelZ+.47,material(i===0?0xa8333d:0x8d9a92,.3,.25,{emissive:i===0?0x8e101b:0x1d2924,emissiveIntensity:1.1}));
+  }
+  // Floor-level hazard paint and room-specific warning plates.
+  if(['generator','reactor','isolation','containment','medical'].includes(room.type)){
+    const hazard=material(0xb58b32,.62,.22,{emissive:0x38250a,emissiveIntensity:.3});
+    for(let i=0;i<7;i++){const stripe=addBox(parent,.12,.02,.58,x-1.55+i*.52,.015,z+3.72,hazard);stripe.rotation.y=-.38;stripe.castShadow=false;}
+  }
+  // A focused ceiling spotlight gives the room a cinematic pool of light and deep falloff.
+  const beam=new THREE.SpotLight(glowColor,room.type==='reactor'?3.2:2.25,12,Math.PI/3.4,.58,1.35);
+  beam.position.set(x,3.35,z);const target=new THREE.Object3D();target.position.set(x,.05,z);parent.add(beam,target);beam.target=target;
+  beam.castShadow=false;
 }
 function addRoomProps(room,parent){
   const darkMetal=material(0x242b2e,.68,.42),rubber=material(0x111719,.98,.02),wood=material(0x4b4033,.88,.05),screen=material(0x151f24,.4,.25,{emissive:0x071a20,emissiveIntensity:.8}),trimMat=material(0x6b7475,.65,.3);
