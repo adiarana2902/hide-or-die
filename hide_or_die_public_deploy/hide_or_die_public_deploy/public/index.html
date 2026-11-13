@@ -266,15 +266,15 @@ function init3D(){
   state.renderer.setSize(window.innerWidth,window.innerHeight,false);
   state.renderer.outputColorSpace=THREE.SRGBColorSpace;
   state.renderer.toneMapping=THREE.ACESFilmicToneMapping;
-  state.renderer.toneMappingExposure=1.12;
+  state.renderer.toneMappingExposure=1.22;
   state.scene=new THREE.Scene();
   state.scene.background=new THREE.Color(0x030609);
-  state.scene.fog=new THREE.FogExp2(0x05090d,0.026);
+  state.scene.fog=new THREE.FogExp2(0x05090d,0.021);
   state.camera=new THREE.PerspectiveCamera(Number(localStorage.getItem('hod-fov')||78),window.innerWidth/window.innerHeight,0.05,110);
   state.camera.position.set(-18,1.68,-12);
   state.scene.add(state.camera);
   const hemi=new THREE.HemisphereLight(0x93a8b8,0x17110d,0.34);state.scene.add(hemi);
-  const ambient=new THREE.AmbientLight(0x26343d,0.24);state.scene.add(ambient);
+  const ambient=new THREE.AmbientLight(0x33434a,0.31);state.scene.add(ambient);
   const fill=new THREE.DirectionalLight(0x5e7185,0.35);fill.position.set(-12,18,4);fill.castShadow=true;fill.shadow.mapSize.set(mobileDevice?1024:2048,mobileDevice?1024:2048);fill.shadow.camera.near=.5;fill.shadow.camera.far=52;fill.shadow.camera.left=-34;fill.shadow.camera.right=34;fill.shadow.camera.top=34;fill.shadow.camera.bottom=-34;fill.shadow.bias=-.00018;fill.shadow.normalBias=.025;state.scene.add(fill);
   buildFacility();buildViewModel();buildMonster();
   state.clock=new THREE.Clock();
@@ -403,7 +403,15 @@ function buildFacility(){
     // Industrial trim bands and room signs.
     addBox(floorGroup,9,.09,.28,room.x,3.35,north,trimMat);
     const sign=new THREE.Mesh(new THREE.PlaneGeometry(3.6,.72),makeSign(room.name));sign.position.set(room.x,2.75,north+.15);floorGroup.add(sign);
-    const lamp=new THREE.PointLight(room.type==='reactor'?0xff4a48:room.type==='medical'?0x9ebcce:0xd39e62,room.type==='reactor'?3.4:1.55,13,2);lamp.position.set(room.x,3.1,room.z);state.scene.add(lamp);lamp.userData.baseIntensity=lamp.intensity;state.environmentLights.push(lamp);
+    const lampColor=room.type==='reactor'?0xff4a48:room.type==='medical'?0x9ebcce:0xd39e62;
+    const lamp=new THREE.PointLight(lampColor,room.type==='reactor'?5.2:3.25,18,1.65);lamp.position.set(room.x,3.08,room.z);state.scene.add(lamp);lamp.userData.baseIntensity=lamp.intensity;state.environmentLights.push(lamp);
+    // Stronger practical ceiling light: a real pool of light, not only an emissive ceiling prop.
+    const keyLight=new THREE.SpotLight(room.type==='reactor'?0xff5860:room.type==='medical'?0xb8e8f0:0xffd29a,8.5,17,Math.PI/3.1,.72,1.25);
+    keyLight.position.set(room.x-.85,3.38,room.z-.45);const keyTarget=new THREE.Object3D();keyTarget.position.set(room.x+.25,.05,room.z+.35);
+    state.scene.add(keyLight,keyTarget);keyLight.target=keyTarget;keyLight.castShadow=false;
+    // Visible fluorescent diffuser and twin tubes make the source of the light readable.
+    addBox(floorGroup,2.65,.075,.82,room.x,3.43,room.z,material(0x465156,.36,.48));
+    for(const dx of [-.78,.78])addBox(floorGroup,.12,.035,.68,room.x+dx,3.375,room.z,material(0xc9e7e8,.22,.08,{emissive:0xa4dce3,emissiveIntensity:2.4}));
     const strip=addBox(floorGroup,2.4,.06,.11,room.x,3.2,north+.32,material(room.type==='reactor'?0xb82b35:0x9d8a5d,.35,.4,{emissive:room.type==='reactor'?0x681018:0x3b2a0a,emissiveIntensity:1.5}));
     addRoomProps(room,floorGroup);
     addRoomVisualDetails(room,floorGroup);
