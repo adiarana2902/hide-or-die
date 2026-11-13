@@ -384,14 +384,62 @@ function buildViewModel(){
 }
 function buildMonster(){
   const root=new THREE.Group();state.monster=root;state.scene.add(root);
-  const flesh=material(0x171b1c,.94,.03),wound=material(0x4d1017,.72,.06,{emissive:0x210208,emissiveIntensity:.6}),eye=material(0xff1f2c,.24,.1,{emissive:0xff0018,emissiveIntensity:5});
-  const torso=new THREE.Mesh(new THREE.CapsuleGeometry(.47,.9,5,8),flesh);torso.position.y=1.35;torso.scale.set(.88,1.1,.78);root.add(torso);
-  const head=new THREE.Mesh(new THREE.SphereGeometry(.39,12,10),flesh);head.position.set(0,2.28,-.03);head.scale.set(.82,1.25,.9);root.add(head);
-  const jaw=new THREE.Mesh(new THREE.BoxGeometry(.36,.18,.28),wound);jaw.position.set(0,2.05,-.24);root.add(jaw);
-  for(const x of [-.15,.15]){const e=new THREE.Mesh(new THREE.SphereGeometry(.065,8,8),eye);e.position.set(x,2.32,-.36);root.add(e);}
-  const arms=[];for(const side of [-1,1]){const arm=new THREE.Mesh(new THREE.CapsuleGeometry(.13,.9,4,7),flesh);arm.position.set(side*.56,1.35,-.02);arm.rotation.z=side*-.25;root.add(arm);arms.push(arm);const claw=new THREE.Mesh(new THREE.ConeGeometry(.12,.45,6),wound);claw.position.set(side*.67,.72,-.1);claw.rotation.z=Math.PI;root.add(claw);}
-  const legMat=material(0x0d1012,.98,.02),legs=[];for(const side of [-1,1]){const leg=new THREE.Mesh(new THREE.CapsuleGeometry(.16,.62,4,7),legMat);leg.position.set(side*.22,.47,.02);root.add(leg);legs.push(leg);}root.userData.parts={torso,head,arms,legs};root.traverse(object=>{if(object.isMesh)object.castShadow=true;});
-  const aura=new THREE.PointLight(0xc11928,1.2,6,2);aura.position.set(0,1.8,0);root.add(aura);
+  const flesh=material(0x171b1c,.93,.025),fleshLight=material(0x303638,.88,.04),wound=material(0x4d1017,.7,.08,{emissive:0x210208,emissiveIntensity:.65}),bone=material(0x77766d,.82,.04),eye=material(0xff1f2c,.2,.08,{emissive:0xff0018,emissiveIntensity:5}),black=material(0x080b0d,.98,.01);
+  const add=(geo,mat,x,y,z,rx=0,ry=0,rz=0,scale=null)=>{const m=new THREE.Mesh(geo,mat);m.position.set(x,y,z);m.rotation.set(rx,ry,rz);if(scale)m.scale.set(...scale);m.castShadow=true;m.receiveShadow=true;root.add(m);return m;};
+  const ball=(x,y,z,sx,sy,sz,mat)=>add(new THREE.SphereGeometry(1,16,12),mat,x,y,z,0,0,0,[sx,sy,sz]);
+  const capsule=(x,y,z,r,len,mat,rz=0,rx=0)=>add(new THREE.CapsuleGeometry(r,len,6,10),mat,x,y,z,rx,0,rz);
+  const cone=(x,y,z,r,h,mat,rz=0,rx=0)=>add(new THREE.ConeGeometry(r,h,8),mat,x,y,z,rx,0,rz);
+  // Hunched, asymmetrical torso with exposed sternum and layered muscle masses.
+  const torso=capsule(0,1.34,.02,.43,.92,flesh,-.08);torso.scale.set(.98,1.14,.82);
+  ball(0,1.52,-.12,.34,.52,.31,fleshLight);
+  ball(-.34,1.7,0,.24,.31,.24,flesh);ball(.34,1.58,.03,.29,.37,.25,flesh);
+  // Rib cage: individual curved bone segments remain readable in flashlight light.
+  for(let row=0;row<4;row++){const y=1.58-row*.17,w=.26-row*.025;for(const side of [-1,1]){const rib=add(new THREE.TorusGeometry(w,.035,6,14,Math.PI*.82),bone,side*.12,y,-.265,0,0,side<0?Math.PI:0);rib.scale.set(1,.72,.7);}}
+  const sternum=add(new THREE.CapsuleGeometry(.045,.56,4,7),wound,0,1.48,-.31);sternum.rotation.z=.08;
+  // Neck and skull sit forward of the shoulders, creating a predatory silhouette.
+  capsule(0,2.02,-.08,.19,.34,flesh,.04);
+  const head=ball(0,2.31,-.15,.34,.43,.34,flesh);head.scale.set(.92,1.18,.95);
+  ball(0,2.12,-.39,.28,.17,.16,wound);
+  const jaw=ball(0,2.02,-.38,.29,.13,.18,fleshLight);
+  // Split jaw, dark mouth cavity and irregular teeth.
+  ball(0,2.15,-.47,.235,.105,.045,black);
+  for(let i=0;i<9;i++){const x=(i-4)*.048;cone(x,2.12+(i%2)*.012,-.51,.026,.095,bone,Math.PI);}
+  for(let i=0;i<7;i++){const x=(i-3)*.055;cone(x,2.19,-.505,.022,.07,bone,0);}
+  for(const side of [-1,1]){
+    ball(side*.145,2.39,-.445,.085,.07,.035,wound);
+    ball(side*.145,2.405,-.48,.043,.042,.025,eye);
+    const brow=ball(side*.15,2.49,-.43,.16,.055,.07,fleshLight);brow.rotation.z=side*-.2;
+    // Long cheek tendons and torn skin folds.
+    capsule(side*.27,2.17,-.3,.045,.32,wound,side*.35);
+    cone(side*.29,2.02,-.25,.055,.22,fleshLight,side*.3);
+  }
+  // Uneven shoulders, elongated arms, forearms and articulated hooked fingers.
+  const arms=[],legs=[];
+  for(const side of [-1,1]){
+    ball(side*.49,1.72,.02,.28,.27,.29,flesh);
+    const upper=capsule(side*.59,1.36,-.02,.145,.56,flesh,side*-.18);
+    ball(side*.68,1.04,-.07,.15,.17,.15,fleshLight);
+    capsule(side*.69,.82,-.12,.105,.38,flesh,side*-.12);
+    ball(side*.7,.59,-.2,.13,.12,.13,wound);
+    for(let f=0;f<4;f++){const fx=side*.7+(f-1.5)*.065;const finger=capsule(fx,.43,-.27,.035,.2,fleshLight,side*.12);cone(fx+side*.025,.29,-.31,.035,.16,bone,Math.PI/2);}
+    const hook=cone(side*.83,.51,-.36,.075,.38,bone,side*.5,Math.PI*.78);
+    arms.push(upper);
+    // Long, uneven legs and split, clawed feet.
+    const thigh=capsule(side*.22,.48,.04,.17,.48,flesh,side*.04);
+    ball(side*.23,.22,-.04,.18,.16,.22,fleshLight);
+    capsule(side*.23,.12,-.1,.11,.18,flesh);
+    ball(side*.24,.08,-.31,.17,.1,.29,black);
+    for(let toe=0;toe<3;toe++)cone(side*.24+(toe-1)*.09,.055,-.53,.035,.17,bone,Math.PI);
+    legs.push(thigh);
+  }
+  // Vertebral spikes and ragged dorsal growths.
+  for(let i=0;i<7;i++){const y=.92+i*.22;cone((i%2?-.04:.04),y,.31,.075,.28,i%2?bone:wound,i%2?-.12:.12);}
+  for(let side of [-1,1])for(let i=0;i<3;i++){const y=1.28+i*.24;cone(side*.4,y,.12,.09,.3,wound,side*-.65);}
+  // Wet lesions and torn tissue patches across shoulders and abdomen.
+  for(let i=0;i<13;i++){const a=i*2.399,yy=.95+(i%6)*.22;ball(Math.cos(a)*.31,yy,-.27+Math.sin(a)*.055,.045,.07,.025,i%3===0?bone:wound);}
+  root.userData.parts={torso,head,jaw,arms,legs};
+  root.traverse(object=>{if(object.isMesh){object.castShadow=true;object.receiveShadow=true;}});
+  const aura=new THREE.PointLight(0xc11928,1.35,6,2);aura.position.set(0,1.8,0);root.add(aura);
   root.visible=false;
 }
 function applyScenarioAtmosphere(scenario){
