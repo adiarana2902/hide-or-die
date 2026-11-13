@@ -441,25 +441,14 @@ function addHauntedRoom(room,parent){
     addWallWithDoor(floorGroup,west,south,east,south,hasSouth,wallMat);
     addWallWithDoor(floorGroup,west,north,west,south,hasWest,wallMat);
     addWallWithDoor(floorGroup,east,north,east,south,hasEast,wallMat);
-    // Old mansion room dressing.
-    addBox(floorGroup,9,.09,.28,room.x,3.35,north,trimMat);
-    const sign=new THREE.Mesh(new THREE.PlaneGeometry(3.6,.72),makeSign(room.name));sign.position.set(room.x,2.75,north+.15);floorGroup.add(sign);
-    const lampColor=room.type==='reactor'?0xff4a48:room.type==='medical'?0x9ebcce:0xd39e62;
-    const lamp=new THREE.PointLight(lampColor,room.type==='reactor'?5.2:3.25,18,1.65);lamp.position.set(room.x,3.08,room.z);state.scene.add(lamp);lamp.userData.baseIntensity=lamp.intensity;state.environmentLights.push(lamp);
-    // Stronger practical ceiling light: a real pool of light, not only an emissive ceiling prop.
-    const keyLight=new THREE.SpotLight(room.type==='reactor'?0xff5860:room.type==='medical'?0xb8e8f0:0xffd29a,8.5,17,Math.PI/3.1,.72,1.25);
-    keyLight.position.set(room.x-.85,3.38,room.z-.45);const keyTarget=new THREE.Object3D();keyTarget.position.set(room.x+.25,.05,room.z+.35);
-    state.scene.add(keyLight,keyTarget);keyLight.target=keyTarget;keyLight.castShadow=false;
-    // Visible fluorescent diffuser and twin tubes make the source of the light readable.
-    addBox(floorGroup,2.65,.075,.82,room.x,3.43,room.z,material(0x465156,.36,.48));
-    for(const dx of [-.78,.78])addBox(floorGroup,.12,.035,.68,room.x+dx,3.375,room.z,material(0xc9e7e8,.22,.08,{emissive:0xa4dce3,emissiveIntensity:2.4}));
-    const strip=addBox(floorGroup,2.4,.06,.11,room.x,3.2,north+.32,material(room.type==='reactor'?0xb82b35:0x9d8a5d,.35,.4,{emissive:room.type==='reactor'?0x681018:0x3b2a0a,emissiveIntensity:1.5}));
-    addRoomProps(room,floorGroup);
-    addRoomVisualDetails(room,floorGroup);
-    addHospitalSetDressing(room,floorGroup);
+    // Warm candlelight and intermittent red emergency spill; no clinical ceiling fixtures.
+    addHauntedRoom(room,floorGroup);
+    const lampColor=room.type==='reactor'?0xb91e2c:0xffb879;
+    const lamp=new THREE.PointLight(lampColor,room.type==='reactor'?1.35:.72,11,2);
+    lamp.position.set(room.x+2.1,2.55,room.z-1.2);state.scene.add(lamp);lamp.userData.baseIntensity=lamp.intensity;state.environmentLights.push(lamp);
   }
   // Card-locked security wing gate; the keycard reader sits inside Security.
-  state.securityDoor=addBox(floorGroup,.24,2.9,2.6,-1.5,1.45,-12,material(0x273238,.42,.72,{emissive:0x102027,emissiveIntensity:.25}));
+  state.securityDoor=addBox(floorGroup,.24,2.9,2.6,-1.5,1.45,-12,material(0x201712,.62,.18));
   // 3 x 3 metre connecting corridors, with floor strips and ceiling conduits.
   for(const z of GRID_Z){for(let i=0;i<GRID_X.length-1;i++){const x=(GRID_X[i]+GRID_X[i+1])/2;addBox(floorGroup,3,.18,3,x,-.1,z,floorMat);addBox(floorGroup,3,.12,.18,x,3.55,z-1.28,trimMat);}}
   for(const x of GRID_X){for(let i=0;i<GRID_Z.length-1;i++){const z=(GRID_Z[i]+GRID_Z[i+1])/2;addBox(floorGroup,3,.18,3,x,-.1,z,floorMat);addBox(floorGroup,.18,.12,3,x-1.28,3.55,z,trimMat);}}
