@@ -264,8 +264,16 @@ function addWallWithDoor(parent,x1,z1,x2,z2,door,mat){
   }
 }
 function makeSign(text){const c=document.createElement('canvas');c.width=512;c.height=128;const g=c.getContext('2d');g.fillStyle='#10171b';g.fillRect(0,0,512,128);g.strokeStyle='#8f2830';g.lineWidth=5;g.strokeRect(5,5,502,118);g.fillStyle='#d9d5c8';g.font='bold 48px monospace';g.textAlign='center';g.textBaseline='middle';g.fillText(text,256,66);const tex=new THREE.CanvasTexture(c);tex.colorSpace=THREE.SRGBColorSpace;return new THREE.MeshBasicMaterial({map:tex});}
+function makeGrungeMap(base,seed=1){
+  const canvas=document.createElement('canvas');canvas.width=256;canvas.height=256;
+  const ctx=canvas.getContext('2d');ctx.fillStyle=base;ctx.fillRect(0,0,256,256);
+  let n=seed>>>0;const rand=()=>{n=(n*1664525+1013904223)>>>0;return n/4294967296;};
+  for(let i=0;i<5200;i++){const v=Math.floor(rand()*90),a=.025+rand()*.11;ctx.fillStyle=`rgba(${v+80},${v+85},${v+88},${a})`;const x=rand()*256,y=rand()*256,s=.4+rand()*2.8;ctx.fillRect(x,y,s,s);}
+  for(let i=0;i<95;i++){ctx.strokeStyle=`rgba(4,7,8,${.08+rand()*.2})`;ctx.lineWidth=.4+rand()*1.4;ctx.beginPath();const x=rand()*256,y=rand()*256;ctx.moveTo(x,y);ctx.lineTo(x+(rand()-.5)*38,y+(rand()-.5)*22);ctx.stroke();}
+  const tex=new THREE.CanvasTexture(canvas);tex.wrapS=tex.wrapT=THREE.RepeatWrapping;tex.repeat.set(3,3);tex.colorSpace=THREE.SRGBColorSpace;tex.anisotropy=4;return tex;
+}
 function buildFacility(){
-  const floorMat=material(0x222a2d,.92,.15),wallMat=material(0x30373a,.88,.12),ceilingMat=material(0x14191c,.96,.05),trimMat=material(0x6b7475,.65,.3);
+  const floorTexture=makeGrungeMap('#252d30',17),wallTexture=makeGrungeMap('#30373a',41);\n  const floorMat=material(0x222a2d,.34,.24,{map:floorTexture,bumpMap:floorTexture,bumpScale:.075}),wallMat=material(0x30373a,.91,.08,{map:wallTexture,bumpMap:wallTexture,bumpScale:.045}),ceilingMat=material(0x14191c,.96,.05),trimMat=material(0x6b7475,.65,.3);
   const floorGroup=new THREE.Group();state.scene.add(floorGroup);
   for(const room of ROOMS){
     addBox(floorGroup,9,.18,9,room.x,-.1,room.z,floorMat);
