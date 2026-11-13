@@ -497,15 +497,41 @@ function addRoomProps(room,parent){
 }
 function buildViewModel(){
   const arms=new THREE.Group();arms.position.set(.37,-.34,-.62);state.camera.add(arms);state.viewModel=arms;
-  const sleeve=material(state.avatar.outfit,.9,.08),skin=material(state.avatar.skin,.76,.02),glove=material(0x171b1f,.72,.08),flashMat=material(0x444c4f,.38,.65);
-  const arm1=new THREE.Mesh(new THREE.CylinderGeometry(.085,.13,.52,9),sleeve);arm1.rotation.z=-.36;arm1.position.set(-.03,-.16,-.02);arms.add(arm1);
-  const hand1=new THREE.Mesh(new THREE.SphereGeometry(.105,10,8),skin);hand1.position.set(.02,-.42,-.08);arms.add(hand1);
-  const arm2=new THREE.Mesh(new THREE.CylinderGeometry(.09,.13,.48,9),sleeve);arm2.rotation.z=.35;arm2.position.set(.34,-.21,.03);arms.add(arm2);
-  const hand2=new THREE.Mesh(new THREE.SphereGeometry(.11,10,8),glove);hand2.position.set(.44,-.42,-.1);arms.add(hand2);
-  const torch=new THREE.Mesh(new THREE.CylinderGeometry(.055,.07,.36,12),flashMat);torch.rotation.x=Math.PI/2;torch.position.set(.46,-.32,-.28);arms.add(torch);
-  const lens=new THREE.Mesh(new THREE.CircleGeometry(.06,16),material(0xbcc8c8,.2,.2,{emissive:0x607b84,emissiveIntensity:1.3}));lens.position.set(.46,-.32,-.47);arms.add(lens);
-  const lamp=new THREE.SpotLight(0xd8e7f2,42,28,Math.PI/7,.35,1.2);lamp.position.set(.46,-.31,-.3);const target=new THREE.Object3D();target.position.set(.46,-.35,-1);arms.add(lamp,target);lamp.target=target;state.flashlight=lamp;
-  state.torchLens=lens;state.viewModelParts={sleeves:[arm1,arm2],skin:hand1};updateAvatarPreview();
+  const sleeve=material(state.avatar.outfit,.88,.06),skin=material(state.avatar.skin,.76,.02);
+  const glove=material(0x171c1f,.66,.12),stitch=material(0x7d8988,.7,.2);
+  const metal=material(0x333d42,.32,.78),rubber=material(0x111719,.96,.02);
+  const lensMat=material(0xc8e1e7,.18,.22,{emissive:0x789ba5,emissiveIntensity:1.7});
+  const add=(geo,mat,x,y,z,rx=0,ry=0,rz=0)=>{const m=new THREE.Mesh(geo,mat);m.position.set(x,y,z);m.rotation.set(rx,ry,rz);m.castShadow=true;m.receiveShadow=true;arms.add(m);return m;};
+  const ball=(mat,x,y,z,sx,sy,sz)=>{const m=add(new THREE.SphereGeometry(1,14,10),mat,x,y,z);m.scale.set(sx,sy,sz);return m;};
+  const capsule=(mat,x,y,z,r,len,rz=0)=>add(new THREE.CapsuleGeometry(r,len,5,8),mat,x,y,z,0,0,rz);
+  // Two detailed forearms with tailored cuffs, glove palms and separate fingers.
+  const arm1=capsule(sleeve,-.03,-.16,-.02,.105,.43,-.36);
+  const arm2=capsule(sleeve,.34,-.21,.03,.105,.39,.35);
+  for(const [x,y,z,angle] of [[-.03,-.34,-.055,-.36],[.34,-.39,-.005,.35]]){
+    const cuff=add(new THREE.CylinderGeometry(.112,.112,.075,12),stitch,x,y,z,0,0,angle);
+    cuff.material=stitch;
+  }
+  ball(skin,.02,-.42,-.08,.105,.09,.085);
+  ball(glove,.44,-.42,-.1,.12,.085,.1);
+  for(let f=0;f<4;f++){
+    const fx=.44+(f-1.5)*.047;
+    capsule(glove,fx,-.49,-.13,.025,.12,(f-1.5)*-.08);
+    ball(glove,fx,-.55,-.13,.026,.028,.027);
+  }
+  capsule(glove,.35,-.43,-.16,.028,.11,-.7);
+  // Flashlight: machined barrel, grip rings, bezel, lens and a tactile switch.
+  const torch=add(new THREE.CylinderGeometry(.061,.078,.39,16),metal,.46,-.32,-.28,Math.PI/2);
+  add(new THREE.CylinderGeometry(.08,.08,.065,16),rubber,.46,-.32,-.13,Math.PI/2);
+  add(new THREE.CylinderGeometry(.075,.075,.035,16),stitch,.46,-.32,-.45,Math.PI/2);
+  const lens=add(new THREE.CircleGeometry(.061,20),lensMat,.46,-.32,-.472);
+  add(new THREE.SphereGeometry(.025,10,8),material(0x9d3038,.3,.1,{emissive:0x601018,emissiveIntensity:.8}),.46,-.245,-.29);
+  for(let i=0;i<3;i++)add(new THREE.TorusGeometry(.066,.008,5,16),rubber,.46,-.32,-.2-i*.075,Math.PI/2);
+  const grip=add(new THREE.BoxGeometry(.09,.18,.1),rubber,.46,-.43,-.25);grip.rotation.x=-.15;
+  const lamp=new THREE.SpotLight(0xd8e7f2,42,28,Math.PI/7,.35,1.2);
+  lamp.position.set(.46,-.31,-.3);const target=new THREE.Object3D();target.position.set(.46,-.35,-1);
+  arms.add(lamp,target);lamp.target=target;state.flashlight=lamp;
+  state.torchLens=lens;state.viewModelParts={sleeves:[arm1,arm2],skin:arms.children[4]};
+  updateAvatarPreview();
 }
 function buildMonster(){
   const root=new THREE.Group();state.monster=root;state.scene.add(root);
