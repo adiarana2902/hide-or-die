@@ -361,7 +361,28 @@ function addRoomProps(room,parent){
     addBox(parent,2.2,.18,1.25,x-.6,.9,z-.7,wood);for(const dx of [-1.45,.25])for(const dz of [-.75,.35])addBox(parent,.12,.9,.12,x+dx,.44,z+dz,darkMetal);
     if(['security','lab','office'].includes(room.type)){addBox(parent,1.3,.92,.13,x-.6,1.45,z-.7,screen);addBox(parent,1.12,.055,.03,x-.6,1.7,z-.61,material(0x38747b,.3,.1,{emissive:0x1b565e,emissiveIntensity:1.5}));}if(room.type==='security'){const readerPanel=addBox(parent,.42,.68,.14,x+2.45,1.2,z+.2,material(0x1b292e,.45,.45));addBox(parent,.22,.08,.035,x+2.45,1.35,z+.12,material(0x4a9a8a,.25,.3,{emissive:0x235e52,emissiveIntensity:1.2}));state.securityReader=readerPanel;}
   }
-  if(room.type==='medical'){addBox(parent,2.6,.35,1.4,x+.4,.63,z-.5,material(0x829095,.84,.05));addBox(parent,2.5,.18,1.3,x+.4,.9,z-.5,material(0xc0c1b5,.96,.0));addBox(parent,.12,.35,.12,x-.75,.45,z-.5,darkMetal);}
+  if(room.type==='medical'){
+    const bedX=x+.4,bedZ=z-.5,frame=material(0x58666a,.48,.72),sheet=material(0xb4b7ad,.96,.01),stained=material(0x777d78,.94,.01),chrome=material(0x9aa5a5,.32,.82);
+    addBox(parent,2.6,.22,1.35,bedX,.62,bedZ,darkMetal);
+    addBox(parent,2.48,.16,1.27,bedX,.83,bedZ,sheet);
+    addBox(parent,.62,.14,.43,bedX-.68,.98,bedZ,sheet);
+    addBox(parent,1.05,.018,.12,bedX+.55,.925,bedZ-.2,stained);
+    for(const side of [-1,1]){
+      addBox(parent,.07,.54,.08,bedX+side*1.18,.53,bedZ,frame);
+      addBox(parent,.07,.06,1.32,bedX+side*1.18,.86,bedZ,chrome);
+      addBox(parent,.09,.36,.09,bedX+side*1.18,.35,bedZ-.5,frame);
+      addBox(parent,.09,.36,.09,bedX+side*1.18,.35,bedZ+.5,frame);
+      for(const end of [-1,1]){const wheel=new THREE.Mesh(new THREE.CylinderGeometry(.085,.085,.055,12),rubber);wheel.rotation.z=Math.PI/2;wheel.position.set(bedX+side*1.08,.12,bedZ+end*.48);parent.add(wheel);}
+    }
+    addBox(parent,.12,.58,.12,bedX-1.24,.62,bedZ,frame);
+    addBox(parent,1.15,.06,.1,bedX-1.15,1.1,bedZ,chrome);
+    // IV stand, hanging fluid bag and monitor trolley.
+    const pole=new THREE.Mesh(new THREE.CylinderGeometry(.025,.035,2.15,8),chrome);pole.position.set(bedX+1.55,1.1,bedZ+.62);parent.add(pole);
+    addBox(parent,.58,.72,.08,bedX+1.55,2.02,bedZ+.62,material(0x789b9a,.3,.05,{transparent:true,opacity:.48}));
+    addBox(parent,.62,.42,.12,bedX+2.15,1.1,bedZ+.45,darkMetal);
+    addBox(parent,.48,.29,.025,bedX+2.15,1.18,bedZ+.37,material(0x18383c,.24,.12,{emissive:0x16464a,emissiveIntensity:1.4}));
+    for(let i=0;i<2;i++)addBox(parent,.07,.4,.07,bedX+1.95+i*.4,.35,bedZ+.45,frame);
+  }
   if(room.type==='storage'||room.type==='loading'){for(let i=0;i<3;i++){addBox(parent,1.1,1.15,1.1,x-2.7+i*1.65,.65,z+.8,wood);addBox(parent,1.1,.09,1.1,x-2.7+i*1.65,1.25,z+.8,trimMat);}}
   if(room.type==='generator'){addBox(parent,2.4,2.3,2.1,x+.8,1.15,z+.8,darkMetal);for(let i=0;i<4;i++)addBox(parent,.12,1.7,.14,x-.2+i*.65,1.15,z-.3,material(0x9b3439,.55,.55,{emissive:0x381015,emissiveIntensity:.6}));const panel=addBox(parent,.62,.82,.16,x-3.15,1.15,z-.65,material(0x17252a,.48,.4));const lever=addBox(parent,.1,.42,.12,x-3.15,1.35,z-.54,material(0x9d3439,.4,.45,{emissive:0x551018,emissiveIntensity:.8}));panel.userData.interactive='breaker';state.breakerPanel={mesh:panel,lever};}
   if(room.type==='reactor'){const core=new THREE.Mesh(new THREE.CylinderGeometry(1.05,1.35,3.1,12),material(0x4d2830,.35,.65,{emissive:0x70131c,emissiveIntensity:1.2}));core.position.set(x,1.55,z);parent.add(core);const ring=new THREE.Mesh(new THREE.TorusGeometry(1.55,.08,8,32),material(0xb84c4f,.3,.8,{emissive:0x6e121a,emissiveIntensity:1.3}));ring.rotation.x=Math.PI/2;ring.position.set(x,1.7,z);parent.add(ring);}
